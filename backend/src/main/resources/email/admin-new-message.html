@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Customer Message — SREVIA HERBS Admin</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FCFBF7; margin: 0; padding: 0; color: #242824; }
+        .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #F4F0E7; }
+        .header { background: #1F3D2E; padding: 30px; text-align: center; color: #FCFBF7; }
+        .brand-title { font-size: 22px; font-weight: 800; letter-spacing: 3px; margin: 0; color: #FCFBF7; text-transform: uppercase; }
+        .brand-subtitle { font-size: 11px; letter-spacing: 2px; color: #B89B5E; margin-top: 5px; text-transform: uppercase; font-weight: 600; }
+        .content { padding: 35px; }
+        .title { font-size: 20px; font-weight: 700; color: #1F3D2E; margin: 0 0 15px; }
+        .card { background-color: #FCFBF7; border: 1px solid #A8B9A3; border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #B89B5E; font-weight: 700; margin-bottom: 3px; }
+        .value { font-size: 14px; color: #1F3D2E; font-weight: 600; margin-bottom: 12px; }
+        .message-box { font-size: 14px; color: #242824; line-height: 1.6; background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
+        .button-wrap { text-align: center; margin: 30px 0 10px; }
+        .button { display: inline-block; background-color: #1F3D2E; color: #FCFBF7 !important; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        .footer { background-color: #F4F0E7; padding: 20px; text-align: center; font-size: 12px; color: #718096; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-title">SREVIA HERBS ADMIN</div>
+            <div class="brand-subtitle">NEW CUSTOMER MESSAGE NOTIFICATION</div>
+        </div>
+
+        <div class="content">
+            <div class="title">📩 New Website Inquiry</div>
+            <p>You have received a new contact inquiry through the SREVIA HERBS website.</p>
+
+            <div class="card">
+                <div class="label">Message ID</div>
+                <div class="value">{{MESSAGE_ID}}</div>
+
+                <div class="label">Customer Name</div>
+                <div class="value">{{CUSTOMER_NAME}}</div>
+
+                <div class="label">Customer Email</div>
+                <div class="value"><a href="mailto:{{CUSTOMER_EMAIL}}" style="color:#315C45;">{{CUSTOMER_EMAIL}}</a></div>
+
+                <div class="label">Subject</div>
+                <div class="value">{{SUBJECT}}</div>
+
+                <div class="label">Submitted At</div>
+                <div class="value">{{CREATED_AT}}</div>
+
+                <div class="label">Customer Message</div>
+                <div class="message-box">{{MESSAGE}}</div>
+            </div>
+
+            <div class="button-wrap">
+                <a href="mailto:{{CUSTOMER_EMAIL}}?subject=Re:%20{{SUBJECT}}" class="button">REPLY TO CUSTOMER</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            SREVIA HERBS Admin System Notification
+        </div>
+    </div>
+</body>
+</html>

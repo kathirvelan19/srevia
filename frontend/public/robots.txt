@@ -1,0 +1,18 @@
+# SREVIA HERBS - Official Search Engine Robots Policy
+User-agent: *
+Allow: /
+Allow: /product
+Allow: /ingredients
+Allow: /our-story
+Allow: /results
+Allow: /contact
+Allow: /track-order
+
+# Block private admin and checkout processing routes
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /checkout
+Disallow: /order-success
+
+# XML Sitemap Location
+Sitemap: https://sreviaherbs.com/sitemap.xml

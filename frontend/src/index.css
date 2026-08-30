@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --color-srevia-bg: #FCFBF7;
+  --color-srevia-primary: #315C45;
+  --color-srevia-deep: #1F3D2E;
+  --color-srevia-sage: #A8B9A3;
+  --color-srevia-ivory: #F4F0E7;
+  --color-srevia-charcoal: #242824;
+  --color-srevia-gold: #B89B5E;
+
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-serif: "Poppins", system-ui, sans-serif;
+  --font-display: "Poppins", system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body, h1, h2, h3, h4, h5, h6, input, button, select, textarea, .font-serif-display {
+    font-family: 'Poppins', system-ui, sans-serif !important;
+  }
+}
+
+/* Custom Keyframe Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(184, 155, 94, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(184, 155, 94, 0.5);
+  }
+}
+
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.animate-sway {
+  animation: sway 4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+/* Glassmorphism & Gradients */
+.glass-card {
+  background: rgba(252, 251, 247, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(168, 185, 163, 0.3);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #B89B5E 0%, #D4AF37 50%, #967B43 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.herbal-gradient-bg {
+  background: linear-gradient(135deg, #1F3D2E 0%, #315C45 100%);
+}
+
+.transition-luxury {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Interactive button active feedback */
+.active-press {
+  transition: transform 0.1s ease;
+}
+.active-press:active {
+  transform: scale(0.96);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F4F0E7;
+}
+::-webkit-scrollbar-thumb {
+  background: #A8B9A3;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #315C45;
+}

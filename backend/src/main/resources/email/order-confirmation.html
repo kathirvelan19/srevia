@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation — SREVIA HERBS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FCFBF7; margin: 0; padding: 0; color: #242824; }
+        .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #F4F0E7; }
+        .header { background: #1F3D2E; padding: 40px 30px; text-align: center; color: #FCFBF7; }
+        .brand-title { font-size: 26px; font-weight: 800; letter-spacing: 3px; margin: 0; color: #FCFBF7; text-transform: uppercase; }
+        .brand-subtitle { font-size: 11px; letter-spacing: 2px; color: #B89B5E; margin-top: 5px; text-transform: uppercase; font-weight: 600; }
+        .content { padding: 40px 35px; }
+        .icon-circle { width: 54px; height: 54px; background-color: #F4F0E7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #1F3D2E; font-size: 26px; font-weight: bold; line-height: 54px; text-align: center; }
+        .title { font-size: 24px; font-weight: 800; color: #1F3D2E; text-align: center; margin: 0 0 8px; }
+        .subtitle { font-size: 13px; text-align: center; color: #B89B5E; margin: 0 0 25px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+        .text { font-size: 14px; line-height: 1.6; color: #4A5568; margin-bottom: 20px; }
+        .order-tag { text-align: center; margin: 20px 0; }
+        .order-id { font-family: monospace; background: #1F3D2E; color: #B89B5E; padding: 8px 18px; border-radius: 50px; font-size: 16px; font-weight: bold; display: inline-block; letter-spacing: 1px; }
+        .table-wrap { margin: 25px 0; background: #FCFBF7; border-radius: 12px; padding: 20px; border: 1px solid #A8B9A3; }
+        .table-head { font-size: 12px; font-weight: 700; uppercase; tracking: 1px; color: #1F3D2E; border-b: 1px solid #E2E8F0; padding-bottom: 10px; margin-bottom: 15px; }
+        .item-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #242824; }
+        .summary-row { display: flex; justify-content: space-between; font-size: 13px; color: #4A5568; margin-bottom: 8px; }
+        .total-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #1F3D2E; border-top: 1px solid #A8B9A3; padding-top: 12px; margin-top: 12px; }
+        .badge { background: #315C45; color: #ffffff; padding: 4px 10px; border-radius: 4px; font-size: 10px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .button-wrap { text-align: center; margin: 35px 0 15px; }
+        .button { display: inline-block; background-color: #1F3D2E; color: #FCFBF7 !important; text-decoration: none; padding: 16px 40px; border-radius: 50px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 4px 12px rgba(31,61,46,0.2); }
+        .footer { background-color: #F4F0E7; padding: 25px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #E2E8F0; }
+        .footer a { color: #1F3D2E; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-title">SREVIA HERBS</div>
+            <div class="brand-subtitle">AYURVEDIC SKINCARE</div>
+        </div>
+
+        <div class="content">
+            <div class="icon-circle">✓</div>
+            <div class="title">ORDER CONFIRMED</div>
+            <div class="subtitle">Your Ayurvedic Skincare Ritual Has Begun</div>
+
+            <p class="text">Hi <strong>{{CUSTOMER_NAME}}</strong>,</p>
+            <p class="text">Thank you for choosing <strong>SREVIA HERBS</strong>. We've received your order and are preparing your fresh handcrafted Ayurvedic skincare batch.</p>
+
+            <div class="order-tag">
+                <span class="order-id">Order ID: {{ORDER_ID}}</span>
+            </div>
+
+            <div class="table-wrap">
+                <div class="table-head">Order Items & Summary</div>
+                
+                {{ITEMS_HTML}}
+
+                <div style="margin: 20px 0; border-top: 1px dashed #A8B9A3;"></div>
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₹{{SUBTOTAL}}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery Charge</span>
+                    <span>{{DELIVERY_TEXT}}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Payment Status</span>
+                    <span><span class="badge">{{PAYMENT_STATUS}}</span></span>
+                </div>
+
+                <div class="total-row">
+                    <span>Total Amount</span>
+                    <span>₹{{TOTAL}}</span>
+                </div>
+            </div>
+
+            <div class="button-wrap">
+                <a href="{{TRACK_ORDER_URL}}" class="button">TRACK YOUR ORDER →</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; SREVIA HERBS. Pure Skin. Pure Care. PureWhite.<br>
+            <a href="{{WEBSITE_URL}}">sreviaherbs.com</a> • <a href="{{CONTACT_URL}}">Customer Support</a>
+        </div>
+    </div>
+</body>
+</html>

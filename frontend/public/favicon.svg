@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Deep Forest Green Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="#1F3D2E" />
+  
+  <!-- Subtle Inner Gold Border Ring -->
+  <circle cx="256" cy="256" r="236" fill="none" stroke="#B89B5E" stroke-width="12" opacity="0.6" />
+
+  <!-- Botanical Herbal Leaf Structure (Gold & Fresh Green) -->
+  <g transform="translate(0, 0)">
+    <!-- Main Leaf Body Left -->
+    <path d="M256,90 C150,150 120,280 190,380 C230,440 256,420 256,420 C256,420 282,440 322,380 C392,280 362,150 256,90 Z" fill="#315C45" stroke="#B89B5E" stroke-width="8" />
+
+    <!-- Center Vein Gold Stem -->
+    <path d="M256,110 L256,410" stroke="#B89B5E" stroke-width="14" stroke-linecap="round" />
+
+    <!-- Side Leaf Veins Right -->
+    <path d="M256,180 C290,200 320,210 340,200" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+    <path d="M256,250 C295,270 330,280 350,270" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+    <path d="M256,320 C285,340 310,345 325,340" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+
+    <!-- Side Leaf Veins Left -->
+    <path d="M256,180 C222,200 192,210 172,200" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+    <path d="M256,250 C217,270 182,280 162,270" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+    <path d="M256,320 C227,340 202,345 187,340" stroke="#B89B5E" stroke-width="8" stroke-linecap="round" fill="none" />
+
+    <!-- Small Golden Dew Drop / Sun Accent Top -->
+    <circle cx="256" cy="70" r="16" fill="#B89B5E" />
+  </g>
+</svg>

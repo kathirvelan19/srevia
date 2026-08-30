@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status Update — SREVIA HERBS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FCFBF7; margin: 0; padding: 0; color: #242824; }
+        .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #F4F0E7; }
+        .header { background: #1F3D2E; padding: 40px 30px; text-align: center; color: #FCFBF7; }
+        .brand-title { font-size: 26px; font-weight: 800; letter-spacing: 3px; margin: 0; color: #FCFBF7; text-transform: uppercase; }
+        .brand-subtitle { font-size: 11px; letter-spacing: 2px; color: #B89B5E; margin-top: 5px; text-transform: uppercase; font-weight: 600; }
+        .content { padding: 40px 35px; }
+        .title { font-size: 22px; font-weight: 800; color: #1F3D2E; text-align: center; margin: 0 0 8px; }
+        .status-badge { display: inline-block; background: #315C45; color: #FCFBF7; padding: 8px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 25px; }
+        .text { font-size: 14px; line-height: 1.6; color: #4A5568; margin-bottom: 20px; }
+        .card { background-color: #FCFBF7; border: 1px solid #A8B9A3; border-radius: 12px; padding: 25px; margin: 25px 0; }
+        .button-wrap { text-align: center; margin: 35px 0 15px; }
+        .button { display: inline-block; background-color: #1F3D2E; color: #FCFBF7 !important; text-decoration: none; padding: 16px 40px; border-radius: 50px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+        .footer { background-color: #F4F0E7; padding: 25px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #E2E8F0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand-title">SREVIA HERBS</div>
+            <div class="brand-subtitle">AYURVEDIC SKINCARE</div>
+        </div>
+
+        <div class="content">
+            <div class="title">ORDER STATUS UPDATE</div>
+            <div style="text-align: center;">
+                <span class="status-badge">{{ORDER_STATUS}}</span>
+            </div>
+
+            <p class="text">Hi <strong>{{CUSTOMER_NAME}}</strong>,</p>
+            <p class="text">Your SREVIA HERBS order <strong>{{ORDER_ID}}</strong> has an update.</p>
+
+            <div class="card">
+                <div style="font-size: 12px; text-transform: uppercase; color: #B89B5E; font-weight: 700; margin-bottom: 5px;">Status Note</div>
+                <div style="font-size: 15px; color: #1F3D2E; font-weight: 600;">{{STATUS_MESSAGE}}</div>
+            </div>
+
+            <div class="button-wrap">
+                <a href="{{TRACK_ORDER_URL}}" class="button">VIEW ORDER DETAILS →</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            &copy; SREVIA HERBS. Pure Skin. Pure Care. PureWhite.
+        </div>
+    </div>
+</body>
+</html>
