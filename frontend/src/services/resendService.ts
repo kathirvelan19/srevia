@@ -62,7 +62,7 @@ export async function sendEmailWithResend({
 }
 
 /**
- * Sends contact form notifications to BOTH Kathirvelan (Admin) & Customer via Resend
+ * Sends contact form notifications to Kathirvelan (Admin) via Vercel serverless /api/contact endpoint or Resend API
  */
 export async function sendContactNotificationViaResend(data: {
   name: string;
@@ -72,7 +72,22 @@ export async function sendContactNotificationViaResend(data: {
   message: string;
   apiKey?: string;
 }): Promise<{ adminSuccess: boolean; customerSuccess: boolean }> {
-  // 1. Email to Admin (Kathirvelan)
+  try {
+    // 1. Try Vercel Serverless Function /api/contact (Bypasses CORS & handles Resend key securely on server)
+    const serverlessRes = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (serverlessRes.ok) {
+      return { adminSuccess: true, customerSuccess: true };
+    }
+  } catch (e) {
+    console.warn("Serverless /api/contact unavailable, falling back to direct Resend call...");
+  }
+
+  // 2. Fallback to direct Resend API call to Kathirvelan
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; color: #242824; max-width: 600px; margin: 0 auto; border: 1px solid #A8B9A3; border-radius: 12px; padding: 24px; background-color: #FCFBF7;">
       <div style="background-color: #1F3D2E; color: #FCFBF7; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
