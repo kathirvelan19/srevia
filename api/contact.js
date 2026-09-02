@@ -21,6 +21,7 @@ export default async function handler(req, res) {
     const { name, email, phone, subject, message } = req.body || {};
 
     const apiKey = (process.env.VITE_RESEND_API_KEY || process.env.MAIL_API_KEY || process.env.RESEND_API_KEY || '').trim();
+    const mailFrom = process.env.MAIL_FROM || 'SREVIA HERBS <onboarding@resend.dev>';
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        from: 'SREVIA HERBS <onboarding@resend.dev>',
+        from: mailFrom,
         to: ['kathirvelankvr@gmail.com'],
         subject: `New Customer Inquiry from ${name || 'Customer'}: ${subject || 'Product Inquiry'}`,
         html: `
