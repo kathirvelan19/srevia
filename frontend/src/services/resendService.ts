@@ -81,10 +81,38 @@ export async function sendContactNotificationViaResend(data: {
     });
 
     if (serverlessRes.ok) {
-      return { adminSuccess: true, customerSuccess: true };
+      const resJson = await serverlessRes.json();
+      if (resJson.success) {
+        return { adminSuccess: true, customerSuccess: true };
+      }
     }
   } catch (e) {
-    console.warn("Serverless /api/contact unavailable, falling back to direct Resend call...");
+    console.warn("Serverless /api/contact unavailable, trying FormSubmit backup...");
+  }
+
+  // 2. Guaranteed FormSubmit Ajax Fallback (Delivers directly to kathirvelankvr@gmail.com)
+  try {
+    const fsRes = await fetch("https://formsubmit.co/ajax/kathirvelankvr@gmail.com", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        _subject: `New Customer Message from ${data.name}: ${data.subject}`,
+        Name: data.name,
+        Email: data.email,
+        Phone: data.phone,
+        Subject: data.subject,
+        Message: data.message,
+        _captcha: "false"
+      })
+    });
+    if (fsRes.ok) {
+      return { adminSuccess: true, customerSuccess: true };
+    }
+  } catch (err) {
+    console.warn("FormSubmit fallback error:", err);
   }
 
   // 2. Fallback to direct Resend API call to Kathirvelan
