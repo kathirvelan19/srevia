@@ -55,19 +55,19 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2.5 text-xs text-[#FCFBF7]/85">
               <li>
-                <Link to="/contact" className="hover:text-[#B89B5E] transition-colors">FAQ</Link>
+                <Link to="/faq" className="hover:text-[#B89B5E] transition-colors">FAQ</Link>
               </li>
               <li>
                 <Link to="/track-order" className="hover:text-[#B89B5E] transition-colors">Shipping Info</Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-[#B89B5E] transition-colors">Returns</Link>
+                <Link to="/returns-policy" className="hover:text-[#B89B5E] transition-colors">Returns</Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-[#B89B5E] transition-colors">Privacy Policy</Link>
+                <Link to="/privacy-policy" className="hover:text-[#B89B5E] transition-colors">Privacy Policy</Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-[#B89B5E] transition-colors">Terms of Service</Link>
+                <Link to="/terms-of-service" className="hover:text-[#B89B5E] transition-colors">Terms of Service</Link>
               </li>
             </ul>
           </div>

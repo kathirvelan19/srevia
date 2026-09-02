@@ -14,6 +14,10 @@ import { ContactPage } from './pages/Contact';
 import { CheckoutPage } from './pages/Checkout';
 import { OrderSuccessPage } from './pages/OrderSuccess';
 import { TrackOrderPage } from './pages/TrackOrder';
+import { FAQPage } from './pages/FAQ';
+import { ReturnsPage } from './pages/Returns';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicy';
+import { TermsOfServicePage } from './pages/TermsOfService';
 
 // Admin Pages
 import { AdminLoginPage } from './pages/Admin/Login';
@@ -118,6 +122,38 @@ export const App: React.FC = () => {
             element={
               <MainLayout>
                 <TrackOrderPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <MainLayout>
+                <FAQPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/returns-policy"
+            element={
+              <MainLayout>
+                <ReturnsPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/privacy-policy"
+            element={
+              <MainLayout>
+                <PrivacyPolicyPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/terms-of-service"
+            element={
+              <MainLayout>
+                <TermsOfServicePage />
               </MainLayout>
             }
           />
