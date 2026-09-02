@@ -36,8 +36,8 @@ export const Contact: React.FC = () => {
     <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
       <SEO
         title="Contact Kathirvelan & Srevia Herbs | Customer Support & Inquiries"
-        description="Get in touch with Kathirvelan and the SREVIA HERBS team in Coimbatore, Tamil Nadu. Phone: +91 9025132739, Email: kathirvelankvr@gmail.com."
-        keywords="Contact Srevia Herbs, Kathirvelan contact number, Srevia Herbs address Coimbatore, PUREWHITE soap customer support"
+        description="Get in touch with Kathirvelan and the SREVIA HERBS team online. Phone: +91 9025132739, Email: kathirvelankvr@gmail.com."
+        keywords="Contact Srevia Herbs, Kathirvelan contact number, PUREWHITE soap customer support"
         canonicalUrl="https://sreviaherbs.com/contact"
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -109,9 +109,6 @@ export const Contact: React.FC = () => {
                   <h3 className="font-semibold text-xs text-[#B89B5E] uppercase tracking-wider">Store Presence</h3>
                   <p className="text-xs text-white font-semibold leading-relaxed">
                     100% Online Store • Pan-India Shipping
-                  </p>
-                  <p className="text-[11px] text-[#A8B9A3] mt-0.5">
-                    Based in Coimbatore, Tamil Nadu, India
                   </p>
                 </div>
               </div>

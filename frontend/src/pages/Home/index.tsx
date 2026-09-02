@@ -17,7 +17,7 @@ export const Home: React.FC = () => {
       <SEO
         title="Srevia Herbs | PUREWHITE Herbal Anti-Pimple Soap & Ayurvedic Skincare"
         description="Rooted in traditional Indian herbal care, crafted for modern everyday skincare. Discover PUREWHITE Herbal Anti-Pimple Soap by Kathirvelan."
-        keywords="Srevia Herbs, PUREWHITE soap, herbal anti pimple soap, Ayurvedic skincare, Kathirvelan, Neem soap, Tulsi soap, Coimbatore skincare"
+        keywords="Srevia Herbs, PUREWHITE soap, herbal anti pimple soap, Ayurvedic skincare, Kathirvelan, Neem soap, Tulsi soap"
         canonicalUrl="https://sreviaherbs.com/"
       />
       {/* 1. Brand Intro Loading Experience */}

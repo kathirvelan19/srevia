@@ -9,7 +9,7 @@ interface SEOProps {
 
 export const SEO: React.FC<SEOProps> = ({
   title = 'Srevia Herbs | PUREWHITE Herbal Anti-Pimple Soap & Ayurvedic Skincare',
-  description = 'Handcrafted with pure Neem, Holy Basil Tulsi, and Cold-Pressed Virgin Coconut Oil by Kathirvelan in Coimbatore, Tamil Nadu.',
+  description = 'Handcrafted with pure Neem, Holy Basil Tulsi, and Cold-Pressed Virgin Coconut Oil by Kathirvelan.',
   keywords = 'Srevia Herbs, PUREWHITE soap, herbal anti pimple soap, Ayurvedic skincare, Neem soap, Kathirvelan',
   canonicalUrl = 'https://sreviaherbs.com/'
 }) => {
