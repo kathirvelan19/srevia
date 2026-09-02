@@ -28,14 +28,22 @@ export const Contact: React.FC = () => {
     setLastSubmittedMsg(currentData);
 
     try {
-      // 1. Submit via backend API
-      await submitContactForm(currentData);
+      // 1. Dispatch email via Resend API directly to kathirvelankvr@gmail.com
+      const resendRes = await sendContactNotificationViaResend(currentData);
 
-      // 2. Dispatch email via Resend API directly to kathirvelankvr@gmail.com & customer
-      await sendContactNotificationViaResend(currentData);
+      // 2. Submit to backend DB (safely)
+      try {
+        await submitContactForm(currentData);
+      } catch (e) {
+        console.warn("Backend DB sync note:", e);
+      }
 
-      setSubmitted(true);
-      setFormData({ name: '', email: '', phone: '', subject: 'Product Enquiry', message: '' });
+      if (resendRes.adminSuccess) {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', phone: '', subject: 'Product Enquiry', message: '' });
+      } else {
+        throw new Error("Unable to send message via Resend API. Please check your network or try again.");
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to send message. Please try again.');
     } finally {
