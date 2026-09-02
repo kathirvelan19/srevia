@@ -24,7 +24,7 @@ export async function sendEmailWithResend({
   apiKey,
   from = RESEND_DEFAULT_FROM,
 }: SendEmailParams): Promise<{ success: boolean; id?: string; error?: string }> {
-  // Use provided apiKey or fallback to environment variable
+  // Use provided apiKey or fallback to VITE_RESEND_API_KEY environment variable
   const activeApiKey = (apiKey || import.meta.env.VITE_RESEND_API_KEY || '').trim();
 
   if (!activeApiKey) {
