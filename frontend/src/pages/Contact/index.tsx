@@ -16,15 +16,25 @@ export const Contact: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [lastSubmittedMsg, setLastSubmittedMsg] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const currentData = { ...formData };
+    setLastSubmittedMsg(currentData);
+
     try {
-      await submitContactForm(formData);
+      await submitContactForm(currentData);
       setSubmitted(true);
       setFormData({ name: '', email: '', phone: '', subject: 'Product Enquiry', message: '' });
+      
+      // Auto-trigger WhatsApp dispatch for instant reception
+      const waText = `*New Customer Inquiry — SREVIA HERBS*\n\n*Name:* ${currentData.name}\n*Phone:* ${currentData.phone}\n*Email:* ${currentData.email}\n*Subject:* ${currentData.subject}\n*Message:* ${currentData.message}`;
+      const waUrl = `https://wa.me/919025132739?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
     } catch (err: any) {
       setError(err.message || 'Failed to send message. Please try again.');
     } finally {
@@ -123,20 +133,52 @@ export const Contact: React.FC = () => {
           {/* Contact Form */}
           <div className="lg:col-span-7 bg-[#FCFBF7] p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 shadow-herbal">
             {submitted ? (
-              <div className="py-12 text-center space-y-4">
+              <div className="py-10 text-center space-y-5">
                 <div className="w-16 h-16 bg-[#315C45] text-white rounded-full flex items-center justify-center mx-auto shadow-md">
-                  <CheckCircle2 className="w-8 h-8" />
+                  <CheckCircle2 className="w-8 h-8 text-[#B89B5E]" />
                 </div>
-                <h3 className="text-2xl font-bold text-[#1F3D2E]">Message Sent Successfully!</h3>
-                <p className="text-sm text-[#242824]/70 max-w-md mx-auto">
-                  Thank you for reaching out, <span className="font-semibold">{formData.name || 'Friend'}</span>. Kathirvelan will get back to you shortly at <span className="font-semibold">{formData.email}</span>.
+                <h3 className="text-2xl font-bold text-[#1F3D2E]">Message Dispatched & Saved!</h3>
+                <p className="text-sm text-[#242824]/80 max-w-md mx-auto leading-relaxed">
+                  Thank you for reaching out, <span className="font-semibold text-[#1F3D2E]">{lastSubmittedMsg.name || 'Friend'}</span>. Your message has been received!
                 </p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="mt-4 bg-[#315C45] hover:bg-[#1F3D2E] text-white font-semibold text-xs uppercase tracking-wider px-8 py-3 rounded-full transition-colors"
-                >
-                  Send Another Message
-                </button>
+
+                <div className="bg-[#F4F0E7]/80 p-5 rounded-2xl border border-[#A8B9A3]/30 max-w-md mx-auto text-xs text-left space-y-2">
+                  <p className="font-bold text-[#1F3D2E] text-sm">Instant Delivery Options:</p>
+                  <p className="text-[#242824]/70">If your browser popup blocker prevented automatic WhatsApp or Mail dispatch, use these instant buttons below:</p>
+
+                  <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <a
+                      href={`https://wa.me/919025132739?text=${encodeURIComponent(
+                        `*New Customer Inquiry — SREVIA HERBS*\n\n*Name:* ${lastSubmittedMsg.name}\n*Phone:* ${lastSubmittedMsg.phone}\n*Email:* ${lastSubmittedMsg.email}\n*Subject:* ${lastSubmittedMsg.subject}\n*Message:* ${lastSubmittedMsg.message}`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    >
+                      <span>Send via WhatsApp</span>
+                    </a>
+
+                    <a
+                      href={`mailto:kathirvelankvr@gmail.com?subject=${encodeURIComponent(
+                        `New Message from ${lastSubmittedMsg.name}: ${lastSubmittedMsg.subject}`
+                      )}&body=${encodeURIComponent(
+                        `Name: ${lastSubmittedMsg.name}\nPhone: ${lastSubmittedMsg.phone}\nEmail: ${lastSubmittedMsg.email}\nSubject: ${lastSubmittedMsg.subject}\nMessage: ${lastSubmittedMsg.message}`
+                      )}`}
+                      className="w-full bg-[#1F3D2E] hover:bg-[#315C45] text-white font-bold text-xs uppercase tracking-wider py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    >
+                      <span>Send via Email App</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => setSubmitted(false)}
+                    className="bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/30 font-semibold text-xs uppercase tracking-wider px-8 py-3 rounded-full transition-colors"
+                  >
+                    Send Another Message
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
