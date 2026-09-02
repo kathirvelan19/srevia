@@ -86,12 +86,9 @@ export const Footer: React.FC = () => {
                 <Mail className="w-4 h-4 text-[#B89B5E] shrink-0" />
                 <a href="mailto:kathirvelankvr@gmail.com" className="hover:underline">kathirvelankvr@gmail.com</a>
               </li>
-              <li className="flex items-start gap-2.5 pt-1">
-                <Clock className="w-4 h-4 text-[#B89B5E] shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <p>Mon–Fri: 3PM–7PM</p>
-                  <p>Sat: 10AM–6PM</p>
-                </div>
+              <li className="flex items-center gap-2.5 pt-1">
+                <Clock className="w-4 h-4 text-[#B89B5E] shrink-0" />
+                <span className="font-semibold text-white">24/7 Available (All Time)</span>
               </li>
             </ul>
           </div>

@@ -116,8 +116,7 @@ export const Contact: React.FC = () => {
 
             <div className="pt-6 border-t border-[#315C45] text-xs text-[#A8B9A3] space-y-1">
               <p className="font-medium text-white">Customer Support Hours:</p>
-              <p>Mon–Fri: 3:00 PM – 7:00 PM IST</p>
-              <p>Sat: 10:00 AM – 6:00 PM IST</p>
+              <p className="font-bold text-white text-sm">24/7 Available (All Time)</p>
             </div>
           </div>
 
