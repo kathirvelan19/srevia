@@ -69,6 +69,74 @@ export const ResultsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Real Customer Stories Section */}
+        <div className="space-y-8 pt-8 border-t border-[#F4F0E7]">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="inline-block text-xs font-bold uppercase tracking-[0.25em] text-[#B89B5E] bg-[#1F3D2E] px-4 py-1.5 rounded-full shadow-sm">
+              REAL RESULTS
+            </span>
+            <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-[#1F3D2E]">
+              Real People, Real Stories
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-[#F4F0E7]/60 p-8 rounded-3xl border border-[#A8B9A3]/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex text-[#B89B5E] gap-1 text-sm">★★★★★</div>
+                <p className="text-sm text-[#1F3D2E] font-medium leading-relaxed italic">
+                  "My skin cleared up within 3 weeks. I've tried so many products — this is the only one that actually worked without drying my face."
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-4 border-t border-[#A8B9A3]/30">
+                <div className="w-10 h-10 rounded-full bg-[#1F3D2E] text-[#B89B5E] font-bold text-xs flex items-center justify-center font-mono">
+                  SL
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#1F3D2E] text-xs">Suriya Lithesh G</h4>
+                  <p className="text-[11px] text-[#242824]/60">Chennai, Tamil Nadu</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#F4F0E7]/60 p-8 rounded-3xl border border-[#A8B9A3]/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex text-[#B89B5E] gap-1 text-sm">★★★★★</div>
+                <p className="text-sm text-[#1F3D2E] font-medium leading-relaxed italic">
+                  "Absolutely love this soap! The herbal fragrance is amazing and my skin feels so soft. No more breakouts after 4 weeks of use."
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-4 border-t border-[#A8B9A3]/30">
+                <div className="w-10 h-10 rounded-full bg-[#1F3D2E] text-[#B89B5E] font-bold text-xs flex items-center justify-center font-mono">
+                  SK
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#1F3D2E] text-xs">Sasi Kumar</h4>
+                  <p className="text-[11px] text-[#242824]/60">THIRUVANAMALAI, Tamil Nadu</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#F4F0E7]/60 p-8 rounded-3xl border border-[#A8B9A3]/30 flex flex-col justify-between space-y-4">
+              <div className="space-y-3">
+                <div className="flex text-[#B89B5E] gap-1 text-sm">★★★★☆</div>
+                <p className="text-sm text-[#1F3D2E] font-medium leading-relaxed italic">
+                  "Great natural product. I was skeptical at first but the results surprised me. Skin looks brighter and healthier than ever before."
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-4 border-t border-[#A8B9A3]/30">
+                <div className="w-10 h-10 rounded-full bg-[#1F3D2E] text-[#B89B5E] font-bold text-xs flex items-center justify-center font-mono">
+                  VG
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#1F3D2E] text-xs">Venu Gopal</h4>
+                  <p className="text-[11px] text-[#242824]/60">vellore, TamilNadu</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Transparency Disclaimer */}
         <div className="bg-[#FCFBF7] p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/40 shadow-herbal max-w-4xl mx-auto space-y-4">
           <div className="flex items-center gap-3 text-[#1F3D2E]">
