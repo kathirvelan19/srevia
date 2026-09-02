@@ -106,9 +106,12 @@ export const Contact: React.FC = () => {
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-xs text-[#B89B5E] uppercase tracking-wider">Business Address</h3>
-                  <p className="text-xs text-[#FCFBF7]/80 leading-relaxed">
-                    Srevia Herbs Care Works, Main Road, Coimbatore, Tamil Nadu 641001, India
+                  <h3 className="font-semibold text-xs text-[#B89B5E] uppercase tracking-wider">Store Presence</h3>
+                  <p className="text-xs text-white font-semibold leading-relaxed">
+                    100% Online Store • Pan-India Shipping
+                  </p>
+                  <p className="text-[11px] text-[#A8B9A3] mt-0.5">
+                    Based in Coimbatore, Tamil Nadu, India
                   </p>
                 </div>
               </div>
