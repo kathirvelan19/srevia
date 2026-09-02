@@ -31,9 +31,9 @@ export const ProductShowcaseSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="text-xs font-semibold uppercase tracking-[0.25em] text-[#B89B5E]"
+            className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#B89B5E] bg-[#1F3D2E] px-4 py-1.5 rounded-full shadow-sm"
           >
-            SIGNATURE PRODUCT
+            Best Seller — 15+ Happy Customers
           </motion.span>
           
           <motion.h2
@@ -43,11 +43,11 @@ export const ProductShowcaseSection: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1F3D2E]"
           >
-            PUREWHITE Herbal Anti-Pimple Soap
+            Where Purity Meets Beauty
           </motion.h2>
 
-          <p className="text-sm text-[#242824]/75 font-normal">
-            Crafted for everyday gentle cleansing and a revitalized skin feel.
+          <p className="text-sm text-[#315C45] font-semibold">
+            PUREWHITE Herbal Anti-Pimple Soap
           </p>
         </div>
 
@@ -68,8 +68,8 @@ export const ProductShowcaseSection: React.FC = () => {
                 alt="PUREWHITE Soap Box and Bar"
                 className="w-full h-auto object-cover rounded-xl shadow-sm transform group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute top-6 left-6 bg-[#1F3D2E] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md">
-                Small-Batch Artisanal
+              <div className="absolute top-6 left-6 bg-[#315C45] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md">
+                Save 33% • ₹80 Special
               </div>
             </div>
           </div>
@@ -82,16 +82,26 @@ export const ProductShowcaseSection: React.FC = () => {
                 <h3 className="text-2xl sm:text-3xl font-bold text-[#1F3D2E]">
                   PUREWHITE Soap
                 </h3>
-                <span className="text-3xl font-bold text-[#315C45]">
-                  ₹149
-                </span>
+                <div className="text-right">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-[#315C45]">
+                      ₹80
+                    </span>
+                    <span className="text-base font-medium text-gray-400 line-through">
+                      ₹120
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-[#315C45] bg-[#315C45]/10 px-2 py-0.5 rounded">
+                    Save 33%
+                  </span>
+                </div>
               </div>
               <p className="text-xs text-[#B89B5E] font-semibold uppercase tracking-wider mt-1">
-                100g Bar • Handcrafted Herbal Formula
+                100g Bar • Handcrafted Ayurvedic Formula
               </p>
             </div>
 
-            <p className="text-sm text-[#242824]/80 leading-relaxed font-normal">
+            <p className="text-sm text-[#242824]/85 leading-relaxed font-normal">
               {DEFAULT_PRODUCT.description}
             </p>
 
@@ -132,7 +142,7 @@ export const ProductShowcaseSection: React.FC = () => {
               <div className="flex items-center justify-between text-sm py-3 px-5 bg-[#F4F0E7]/70 rounded-2xl border border-[#A8B9A3]/30">
                 <span className="text-xs text-[#242824]/70 font-medium">Total Amount:</span>
                 <span className="font-bold text-lg text-[#1F3D2E]">
-                  {quantity} × ₹149 = <span className="text-[#315C45]">₹{quantity * 149}</span>
+                  {quantity} × ₹80 = <span className="text-[#315C45]">₹{quantity * 80}</span>
                 </span>
               </div>
 

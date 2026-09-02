@@ -7,16 +7,19 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 export const DEFAULT_PRODUCT: Product = {
   id: 'prod_purewhite_01',
   name: 'PUREWHITE Herbal Anti-Pimple Soap',
-  tagline: 'Pure Skin. Pure Care. PureWhite.',
-  price: 149,
-  description: 'A traditional herbal-inspired cleansing soap formulated with pure Neem, Tulsi, virgin Coconut Oil, and organic Glycerin. Designed for gentle everyday skincare, leaving your skin fresh, radiant, and deeply cleansed.',
+  tagline: 'Where Purity Meets Beauty',
+  price: 80,
+  originalPrice: 120,
+  discount: 'Save 33%',
+  badge: 'Best Seller — 15+ Happy Customers',
+  description: 'Clinically proven to reduce acne by up to 95% in just 4 weeks. Crafted with 100% natural ingredients for radiant, clear skin.',
   stockQuantity: 100,
   image: purewhiteSoapImg || '/assets/purewhite_soap_bar.jpg',
   benefits: [
+    'Clinically proven to reduce acne by up to 95% in just 4 weeks',
+    'Crafted with 100% natural ingredients for radiant, clear skin',
     'Herbal-inspired formulation for gentle everyday cleansing',
     'Helps cleanse pores and remove excess oil naturally',
-    'Supports a fresh, clean, radiant skin feel',
-    'Crafted with carefully selected traditional botanicals',
     'Free from harsh sulfates, artificial dyes, and parabens'
   ],
   ingredients: [
@@ -117,10 +120,10 @@ export const api = {
           email: 'customer@sreviaherbs.com',
           address: { house: '12', street: 'Green Garden', area: 'Heritage Road', city: 'Coimbatore', state: 'Tamil Nadu', pincode: '641001' }
         },
-        items: (payloadObj as Order).items || [{ productId: DEFAULT_PRODUCT.id, productName: DEFAULT_PRODUCT.name, quantity: 1, unitPrice: 149, totalPrice: 149 }],
-        subtotal: (payloadObj as Order).subtotal || 149,
+        items: (payloadObj as Order).items || [{ productId: DEFAULT_PRODUCT.id, productName: DEFAULT_PRODUCT.name, quantity: 1, unitPrice: 80, totalPrice: 80 }],
+        subtotal: (payloadObj as Order).subtotal || 80,
         deliveryCharge: (payloadObj as Order).deliveryCharge || 49,
-        totalAmount: (payloadObj as Order).totalAmount || 198,
+        totalAmount: (payloadObj as Order).totalAmount || 129,
         payment: (payloadObj as Order).payment || { method: 'UPI_QR', status: 'SUBMITTED', utr: 'UTR' + Math.floor(Math.random() * 100000000) },
         orderStatus: 'PAYMENT_SUBMITTED',
         googleSheetsSynced: true,

@@ -9,6 +9,9 @@ export interface Product {
   name: string;
   tagline: string;
   price: number;
+  originalPrice?: number;
+  discount?: string;
+  badge?: string;
   description: string;
   stockQuantity: number;
   image: string;

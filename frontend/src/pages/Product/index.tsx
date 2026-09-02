@@ -25,8 +25,8 @@ export const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
       <SEO
-        title="PUREWHITE Herbal Anti-Pimple Soap | SREVIA HERBS (₹149)"
-        description="Buy PUREWHITE Herbal Anti-Pimple Soap online. Handcrafted with pure Neem, Holy Basil Tulsi, and Virgin Coconut Oil for clear, acne-free, radiant skin. Free delivery across India."
+        title="PUREWHITE Herbal Anti-Pimple Soap | SREVIA HERBS (₹80)"
+        description="Buy PUREWHITE Herbal Anti-Pimple Soap online for ₹80 (MRP ₹120, Save 33%). Clinically proven to reduce acne by up to 95% in just 4 weeks. Handcrafted with 100% natural ingredients."
         keywords="PUREWHITE soap, buy herbal anti pimple soap, Srevia Herbs product, Neem Tulsi soap online, acne removal soap India"
         canonicalUrl="https://sreviaherbs.com/product"
       />
@@ -69,17 +69,23 @@ export const ProductPage: React.FC = () => {
           <div className="lg:col-span-6 space-y-6">
             
             <div className="space-y-2 border-b border-[#F4F0E7] pb-6">
-              <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#B89B5E]">
-                SREVIA HERBS SIGNATURE
+              <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] text-[#B89B5E] bg-[#1F3D2E] px-3.5 py-1 rounded-full shadow-sm">
+                Best Seller — 15+ Happy Customers
               </span>
               <h1 className="font-serif-display text-4xl sm:text-5xl font-bold text-[#1F3D2E]">
-                PUREWHITE Herbal Anti-Pimple Soap
+                Where Purity Meets Beauty
               </h1>
+              <p className="text-sm font-semibold text-[#315C45]">
+                PUREWHITE Herbal Anti-Pimple Soap
+              </p>
               
               <div className="flex items-center justify-between pt-3">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-serif-display text-3xl font-bold text-[#315C45]">₹149</span>
-                  <span className="text-xs text-[#242824]/60">(Inclusive of all taxes)</span>
+                  <span className="font-serif-display text-3xl font-extrabold text-[#315C45]">₹80</span>
+                  <span className="text-base text-gray-400 line-through">₹120</span>
+                  <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
+                    Save 33%
+                  </span>
                 </div>
                 <span className="bg-[#315C45]/10 text-[#315C45] text-xs font-bold px-3 py-1 rounded-full border border-[#315C45]/20">
                   In Stock
@@ -108,7 +114,7 @@ export const ProductPage: React.FC = () => {
 
               <div className="flex items-center justify-between text-sm py-2 px-4 bg-[#FCFBF7] rounded-xl border border-[#F4F0E7]">
                 <span className="text-xs text-[#242824]/70 font-medium">Subtotal</span>
-                <span className="font-bold text-lg text-[#1F3D2E]">₹{quantity * 149}</span>
+                <span className="font-bold text-lg text-[#1F3D2E]">₹{quantity * 80}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">

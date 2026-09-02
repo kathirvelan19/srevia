@@ -55,15 +55,20 @@ export const HeroSection: React.FC = () => {
           {/* Left Editorial Content */}
           <div className="lg:col-span-6 space-y-7 text-left">
             
-            {/* Eyebrow */}
+            {/* Eyebrow & Badge */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#F4F0E7] border border-[#A8B9A3]/40 text-[#1F3D2E] text-[11px] font-semibold uppercase tracking-[0.2em] shadow-sm"
+              className="flex flex-wrap items-center gap-2.5"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#B89B5E]" />
-              <span>100% TRADITIONAL AYURVEDIC FORMULATED</span>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#1F3D2E] text-[#B89B5E] text-[11px] font-bold uppercase tracking-[0.18em] shadow-sm">
+                <Sparkles className="w-3.5 h-3.5" />
+                Best Seller — 15+ Happy Customers
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F4F0E7] border border-[#A8B9A3]/40 text-[#1F3D2E] text-[11px] font-semibold uppercase tracking-[0.15em]">
+                100% TRADITIONAL AYURVEDIC FORMULATED
+              </span>
             </motion.div>
 
             {/* Typography */}
@@ -74,30 +79,57 @@ export const HeroSection: React.FC = () => {
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#1F3D2E] leading-[1.08] tracking-tight"
               >
-                PUREWHITE <br />
-                <span className="font-normal italic text-[#315C45]">Herbal</span> Anti-Pimple Soap
+                Where Purity <br />
+                <span className="font-normal italic text-[#315C45]">Meets Beauty</span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.25 }}
+                className="text-sm uppercase tracking-widest text-[#1F3D2E]/80 font-bold"
+              >
+                PUREWHITE Herbal Anti-Pimple Soap
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.3 }}
-                className="text-lg sm:text-xl text-[#B89B5E] italic font-medium pt-1"
+                className="text-base sm:text-lg text-[#315C45] italic font-medium pt-0.5"
               >
                 "Ancient Indian botanicals, crafted into a modern daily cleansing ritual."
               </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.35 }}
+                className="text-sm sm:text-base text-[#242824]/85 leading-relaxed pt-1"
+              >
+                Clinically proven to reduce acne by up to 95% in just 4 weeks. Crafted with 100% natural ingredients for radiant, clear skin.
+              </motion.p>
             </div>
 
-            {/* Rating & Product Details */}
+            {/* Rating & Product Pricing */}
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
               className="flex flex-wrap items-center gap-4 text-xs text-[#242824]/80 pt-1 font-medium"
             >
-              <span className="text-xl font-bold text-[#1F3D2E] font-sans">
-                ₹149 <span className="text-xs font-normal text-[#242824]/60">/ 100g bar</span>
-              </span>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-3xl font-extrabold text-[#1F3D2E] font-sans">
+                  ₹80
+                </span>
+                <span className="text-base font-medium text-gray-400 line-through">
+                  ₹120
+                </span>
+                <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Save 33%
+                </span>
+                <span className="text-xs font-normal text-[#242824]/60">/ 100g bar</span>
+              </div>
 
               <div className="h-4 w-[1px] bg-[#A8B9A3]/50 hidden sm:block" />
 
@@ -126,7 +158,7 @@ export const HeroSection: React.FC = () => {
                 onClick={handleShopNow}
                 className="bg-[#1F3D2E] hover:bg-[#315C45] text-[#FCFBF7] font-semibold text-xs uppercase tracking-[0.18em] px-9 py-4 rounded-full shadow-herbal hover:shadow-herbal-hover transition-all transform hover:-translate-y-0.5 active-press flex items-center justify-center gap-3 group"
               >
-                <span>SHOP PUREWHITE — ₹149</span>
+                <span>Add to Cart</span>
                 <ArrowRight className="w-4 h-4 text-[#B89B5E] group-hover:translate-x-1.5 transition-transform" />
               </button>
 
@@ -134,7 +166,7 @@ export const HeroSection: React.FC = () => {
                 onClick={scrollToRitual}
                 className="bg-transparent hover:bg-[#F4F0E7] text-[#1F3D2E] border border-[#315C45]/40 font-semibold text-xs uppercase tracking-[0.18em] px-8 py-4 rounded-full transition-all text-center active-press"
               >
-                DISCOVER THE RITUAL
+                View Details
               </button>
             </motion.div>
 
@@ -184,12 +216,14 @@ export const HeroSection: React.FC = () => {
                 >
                   <div className="text-left">
                     <p className="text-[10px] uppercase tracking-widest text-[#242824]/70 font-semibold">
-                      Signature Bar
+                      Special Offer
                     </p>
-                    <p className="text-lg font-bold text-[#1F3D2E]">₹149 / 100g</p>
+                    <p className="text-lg font-bold text-[#1F3D2E]">
+                      ₹80 <span className="text-xs line-through text-gray-400 font-normal">₹120</span>
+                    </p>
                   </div>
                   <span className="bg-[#315C45] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm animate-pulse-glow">
-                    In Stock
+                    Save 33%
                   </span>
                 </motion.div>
 

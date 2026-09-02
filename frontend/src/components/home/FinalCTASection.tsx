@@ -64,7 +64,7 @@ export const FinalCTASection: React.FC = () => {
             onClick={handleShopNow}
             className="bg-[#B89B5E] hover:bg-[#D4AF37] text-[#1F3D2E] font-bold text-xs uppercase tracking-[0.2em] px-10 py-5 rounded-full shadow-2xl transition-all transform hover:-translate-y-1 active-press inline-flex items-center gap-3 group"
           >
-            <span>SHOP PUREWHITE — ₹149</span>
+            <span>SHOP PUREWHITE — ₹80</span>
             <ArrowRight className="w-4 h-4 text-[#1F3D2E] group-hover:translate-x-1.5 transition-transform" />
           </button>
         </motion.div>
