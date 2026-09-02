@@ -243,6 +243,62 @@ export const Contact: React.FC = () => {
           </div>
 
         </div>
+
+        {/* Support & Policy Sections (FAQ, Returns, Privacy Policy, Terms of Service) */}
+        <div className="mt-20 pt-16 border-t border-[#A8B9A3]/30 space-y-12">
+          
+          {/* FAQ Section */}
+          <div id="faq" className="bg-[#F4F0E7]/60 p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 space-y-6 scroll-mt-28">
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#B89B5E]">FREQUENTLY ASKED QUESTIONS</span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#1F3D2E]">Help & FAQ</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-[#242824]/85 leading-relaxed">
+              <div className="bg-[#FCFBF7] p-5 rounded-2xl border border-[#A8B9A3]/20 space-y-2">
+                <h3 className="font-bold text-sm text-[#1F3D2E]">How long does shipping take?</h3>
+                <p>Orders are dispatched within 24 hours. Delivery typically takes 2–5 business days across India.</p>
+              </div>
+              <div className="bg-[#FCFBF7] p-5 rounded-2xl border border-[#A8B9A3]/20 space-y-2">
+                <h3 className="font-bold text-sm text-[#1F3D2E]">Is PUREWHITE suitable for sensitive skin?</h3>
+                <p>Yes, formulated with 100% natural plant oils, virgin coconut oil, neem, and holy basil without harsh sulfates.</p>
+              </div>
+              <div className="bg-[#FCFBF7] p-5 rounded-2xl border border-[#A8B9A3]/20 space-y-2">
+                <h3 className="font-bold text-sm text-[#1F3D2E]">How can I track my order?</h3>
+                <p>Use your Unique Order ID and phone number on our <a href="/track-order" className="underline font-semibold text-[#1F3D2E]">Track Order page</a>.</p>
+              </div>
+              <div className="bg-[#FCFBF7] p-5 rounded-2xl border border-[#A8B9A3]/20 space-y-2">
+                <h3 className="font-bold text-sm text-[#1F3D2E]">What payment methods are supported?</h3>
+                <p>We accept Razorpay (UPI, GPay, PhonePe, Cards, NetBanking) and Manual UPI QR Code payments.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Returns & Refund Policy */}
+          <div id="returns" className="bg-[#FCFBF7] p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 space-y-4 scroll-mt-28 shadow-sm">
+            <h2 className="text-xl font-bold text-[#1F3D2E]">Returns & Replacement Policy</h2>
+            <p className="text-xs text-[#242824]/80 leading-relaxed font-light">
+              Due to personal care hygiene standards, unopened items can be returned or exchanged within 7 days of delivery if defective or damaged during transit. Contact Kathirvelan via WhatsApp (+91 9025132739) or email for immediate replacement.
+            </p>
+          </div>
+
+          {/* Privacy Policy */}
+          <div id="privacy" className="bg-[#FCFBF7] p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 space-y-4 scroll-mt-28 shadow-sm">
+            <h2 className="text-xl font-bold text-[#1F3D2E]">Privacy Policy</h2>
+            <p className="text-xs text-[#242824]/80 leading-relaxed font-light">
+              Srevia Herbs values customer privacy. We collect customer name, shipping address, phone number, and email solely to process orders, send delivery updates, and issue order invoices. We never share or sell customer data to third-party advertisers.
+            </p>
+          </div>
+
+          {/* Terms of Service */}
+          <div id="terms" className="bg-[#FCFBF7] p-8 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 space-y-4 scroll-mt-28 shadow-sm">
+            <h2 className="text-xl font-bold text-[#1F3D2E]">Terms of Service</h2>
+            <p className="text-xs text-[#242824]/80 leading-relaxed font-light">
+              By purchasing from Srevia Herbs, you agree to our order processing and shipping terms. All products are 100% handcrafted herbal skincare soaps. Price: ₹80 per 100g bar (inclusive of taxes).
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   );
