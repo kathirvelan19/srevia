@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle2, User } from 'lucide-react';
 import { SEO } from '../../components/seo/SEO';
 import { submitContactForm } from '../../services/api';
+import { sendContactNotificationViaResend } from '../../services/resendService';
 
 export const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -27,11 +28,16 @@ export const Contact: React.FC = () => {
     setLastSubmittedMsg(currentData);
 
     try {
+      // 1. Submit via backend API
       await submitContactForm(currentData);
+
+      // 2. Dispatch real emails via Resend API
+      await sendContactNotificationViaResend(currentData);
+
       setSubmitted(true);
       setFormData({ name: '', email: '', phone: '', subject: 'Product Enquiry', message: '' });
       
-      // Auto-trigger WhatsApp dispatch for instant reception
+      // 3. Fallback WhatsApp auto-trigger
       const waText = `*New Customer Inquiry — SREVIA HERBS*\n\n*Name:* ${currentData.name}\n*Phone:* ${currentData.phone}\n*Email:* ${currentData.email}\n*Subject:* ${currentData.subject}\n*Message:* ${currentData.message}`;
       const waUrl = `https://wa.me/919025132739?text=${encodeURIComponent(waText)}`;
       window.open(waUrl, '_blank');
