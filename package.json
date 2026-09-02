@@ -2,7 +2,11 @@
   "name": "srevia-herbs",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
+    "build": "npm run build --prefix frontend",
     "dev:frontend": "npm run dev --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "start:backend": "java -jar target/backend-1.0.0.jar || java -jar backend/target/backend-1.0.0.jar",
