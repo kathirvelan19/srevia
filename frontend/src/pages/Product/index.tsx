@@ -1,32 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Leaf, CheckCircle2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { Leaf, CheckCircle2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, Truck, RefreshCw, XCircle } from 'lucide-react';
 import { SEO } from '../../components/seo/SEO';
 import { DEFAULT_PRODUCT } from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import { useStore } from '../../context/StoreContext';
 import heroImg from '../../assets/srevia_hero_soap.jpg';
 import barImg from '../../assets/purewhite_soap_bar.jpg';
 
 export const ProductPage: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
-  const [selectedTab, setSelectedTab] = useState<'benefits' | 'ingredients' | 'howToUse'>('benefits');
   const { addToCart } = useCart();
+  const { inStock, price, originalPrice } = useStore();
   const navigate = useNavigate();
 
+  const activeProduct = {
+    ...DEFAULT_PRODUCT,
+    price,
+    originalPrice,
+    stockQuantity: inStock ? 100 : 0,
+    active: inStock,
+  };
+
   const handleBuyNow = () => {
-    addToCart(DEFAULT_PRODUCT, quantity);
+    if (!inStock) return;
+    addToCart(activeProduct, quantity);
     navigate('/checkout');
   };
 
   const handleAddToCart = () => {
-    addToCart(DEFAULT_PRODUCT, quantity);
+    if (!inStock) return;
+    addToCart(activeProduct, quantity);
   };
+
+  const discountPercent = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
       <SEO
-        title="PUREWHITE Herbal Anti-Pimple Soap | SREVIA HERBS (₹80)"
-        description="Buy PUREWHITE Herbal Anti-Pimple Soap online for ₹80 (MRP ₹120, Save 33%). Clinically proven to reduce acne by up to 95% in just 4 weeks. Handcrafted with 100% natural ingredients."
+        title={`PUREWHITE Herbal Anti-Pimple Soap | SREVIA HERBS (₹${price})`}
+        description={`Buy PUREWHITE Herbal Anti-Pimple Soap online for ₹${price} (MRP ₹${originalPrice}). Clinically proven to reduce acne by up to 95% in just 4 weeks. Handcrafted with 100% natural ingredients.`}
         keywords="PUREWHITE soap, buy herbal anti pimple soap, Srevia Herbs product, Neem Tulsi soap online, acne removal soap India"
         canonicalUrl="https://sreviaherbs.com/product"
       />
@@ -45,11 +58,17 @@ export const ProductPage: React.FC = () => {
           
           {/* Left Product Gallery */}
           <div className="lg:col-span-6 space-y-4">
-            <div className="rounded-3xl overflow-hidden bg-[#F4F0E7] p-4 border border-[#A8B9A3]/30 shadow-herbal">
+            <div className="rounded-3xl overflow-hidden bg-[#F4F0E7] p-4 border border-[#A8B9A3]/30 shadow-herbal relative">
+              {!inStock && (
+                <div className="absolute top-6 left-6 z-10 bg-rose-600 text-white text-xs font-bold uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                  <XCircle className="w-4 h-4" />
+                  <span>Out of Stock (Unavailable)</span>
+                </div>
+              )}
               <img
                 src={heroImg}
                 alt="PUREWHITE Herbal Soap"
-                className="w-full h-auto object-cover rounded-2xl"
+                className={`w-full h-auto object-cover rounded-2xl ${!inStock ? 'opacity-65 grayscale-[30%]' : ''}`}
               />
             </div>
             
@@ -81,15 +100,26 @@ export const ProductPage: React.FC = () => {
               
               <div className="flex items-center justify-between pt-3">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-serif-display text-3xl font-extrabold text-[#315C45]">₹80</span>
-                  <span className="text-base text-gray-400 line-through">₹120</span>
-                  <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
-                    Save 33%
-                  </span>
+                  <span className="font-serif-display text-3xl font-extrabold text-[#315C45]">₹{price}</span>
+                  {originalPrice > price && (
+                    <span className="text-base text-gray-400 line-through">₹{originalPrice}</span>
+                  )}
+                  {discountPercent > 0 && (
+                    <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-0.5 rounded-full">
+                      Save {discountPercent}%
+                    </span>
+                  )}
                 </div>
-                <span className="bg-[#315C45]/10 text-[#315C45] text-xs font-bold px-3 py-1 rounded-full border border-[#315C45]/20">
-                  In Stock
-                </span>
+                
+                {inStock ? (
+                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> In Stock
+                  </span>
+                ) : (
+                  <span className="bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-200 flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Out of Stock
+                  </span>
+                )}
               </div>
             </div>
 
@@ -102,11 +132,19 @@ export const ProductPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#1F3D2E]">Quantity</span>
                 <div className="flex items-center gap-3 bg-[#FCFBF7] px-4 py-2 rounded-full border border-[#A8B9A3]/40">
-                  <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="p-1 hover:text-[#315C45]">
+                  <button
+                    disabled={!inStock}
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="p-1 hover:text-[#315C45] disabled:opacity-40"
+                  >
                     <Minus className="w-4 h-4" />
                   </button>
                   <span className="font-bold text-sm text-[#1F3D2E] w-6 text-center">{quantity}</span>
-                  <button onClick={() => setQuantity((q) => q + 1)} className="p-1 hover:text-[#315C45]">
+                  <button
+                    disabled={!inStock}
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="p-1 hover:text-[#315C45] disabled:opacity-40"
+                  >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
@@ -114,23 +152,33 @@ export const ProductPage: React.FC = () => {
 
               <div className="flex items-center justify-between text-sm py-2 px-4 bg-[#FCFBF7] rounded-xl border border-[#F4F0E7]">
                 <span className="text-xs text-[#242824]/70 font-medium">Subtotal</span>
-                <span className="font-bold text-lg text-[#1F3D2E]">₹{quantity * 80}</span>
+                <span className="font-bold text-lg text-[#1F3D2E]">₹{quantity * price}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
+                  disabled={!inStock}
                   onClick={handleAddToCart}
-                  className="w-full bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/40 font-semibold text-xs uppercase tracking-wider py-4 rounded-full transition-colors flex items-center justify-center gap-2"
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-4 rounded-full transition-colors flex items-center justify-center gap-2 ${
+                    inStock
+                      ? 'bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/40'
+                      : 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed'
+                  }`}
                 >
                   <ShoppingBag className="w-4 h-4 text-[#B89B5E]" />
-                  <span>Add to Cart</span>
+                  <span>{inStock ? 'Add to Cart' : 'Out of Stock'}</span>
                 </button>
 
                 <button
+                  disabled={!inStock}
                   onClick={handleBuyNow}
-                  className="w-full bg-[#1F3D2E] hover:bg-[#315C45] text-white font-semibold text-xs uppercase tracking-wider py-4 rounded-full shadow-herbal transition-all flex items-center justify-center gap-2"
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-4 rounded-full transition-all flex items-center justify-center gap-2 ${
+                    inStock
+                      ? 'bg-[#1F3D2E] hover:bg-[#315C45] text-white shadow-herbal'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  <span>BUY NOW</span>
+                  <span>{inStock ? 'BUY NOW' : 'UNAVAILABLE'}</span>
                   <ArrowRight className="w-4 h-4 text-[#B89B5E]" />
                 </button>
               </div>
@@ -148,79 +196,11 @@ export const ProductPage: React.FC = () => {
               </div>
               <div className="space-y-1">
                 <RefreshCw className="w-5 h-5 mx-auto text-[#B89B5E]" />
-                <p className="text-[11px] font-medium text-[#1F3D2E]">Fresh Handcrafted</p>
+                <p className="text-[11px] font-medium text-[#1F3D2E]">100% Ayurvedic Formula</p>
               </div>
-            </div>
-
-            {/* Product Tabs */}
-            <div className="pt-4 space-y-4">
-              <div className="flex border-b border-[#F4F0E7] gap-8">
-                <button
-                  onClick={() => setSelectedTab('benefits')}
-                  className={`pb-3 text-xs font-bold uppercase tracking-wider transition-colors relative ${
-                    selectedTab === 'benefits' ? 'text-[#1F3D2E]' : 'text-[#242824]/50'
-                  }`}
-                >
-                  Benefits
-                  {selectedTab === 'benefits' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#B89B5E]" />}
-                </button>
-
-                <button
-                  onClick={() => setSelectedTab('ingredients')}
-                  className={`pb-3 text-xs font-bold uppercase tracking-wider transition-colors relative ${
-                    selectedTab === 'ingredients' ? 'text-[#1F3D2E]' : 'text-[#242824]/50'
-                  }`}
-                >
-                  Key Ingredients
-                  {selectedTab === 'ingredients' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#B89B5E]" />}
-                </button>
-
-                <button
-                  onClick={() => setSelectedTab('howToUse')}
-                  className={`pb-3 text-xs font-bold uppercase tracking-wider transition-colors relative ${
-                    selectedTab === 'howToUse' ? 'text-[#1F3D2E]' : 'text-[#242824]/50'
-                  }`}
-                >
-                  How to Use
-                  {selectedTab === 'howToUse' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#B89B5E]" />}
-                </button>
-              </div>
-
-              {selectedTab === 'benefits' && (
-                <div className="space-y-3 animate-fade-in">
-                  {DEFAULT_PRODUCT.benefits.map((b, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-[#242824]/80">
-                      <CheckCircle2 className="w-4 h-4 text-[#315C45] shrink-0 mt-0.5" />
-                      <span>{b}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {selectedTab === 'ingredients' && (
-                <div className="space-y-3 animate-fade-in">
-                  {DEFAULT_PRODUCT.ingredients.map((ing, i) => (
-                    <div key={i} className="bg-[#F4F0E7]/60 p-3 rounded-xl">
-                      <p className="font-serif-display font-bold text-sm text-[#1F3D2E]">{ing.name}</p>
-                      <p className="text-[11px] text-[#242824]/70 mt-0.5">{ing.skincareRole}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {selectedTab === 'howToUse' && (
-                <div className="text-xs text-[#242824]/80 space-y-2 leading-relaxed animate-fade-in">
-                  <p>1. Wet your face and body with lukewarm water.</p>
-                  <p>2. Work PUREWHITE soap between hands to form a rich, creamy lather.</p>
-                  <p>3. Gently massage onto skin for 30–60 seconds, paying attention to oily areas.</p>
-                  <p>4. Rinse thoroughly with water and pat dry.</p>
-                </div>
-              )}
-
             </div>
 
           </div>
-
         </div>
       </div>
     </div>

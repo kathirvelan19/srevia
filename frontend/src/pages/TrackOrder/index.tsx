@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
-import { Search, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Search, ShieldCheck, AlertCircle, Truck, CheckCircle2, Clock } from 'lucide-react';
 import { SEO } from '../../components/seo/SEO';
 import { api } from '../../services/api';
+import { useStore } from '../../context/StoreContext';
+import type { Stage3Status } from '../../context/StoreContext';
 import type { Order } from '../../types';
 
 export const TrackOrderPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { orderId: pathOrderId } = useParams<{ orderId?: string }>();
+  const { orders } = useStore();
 
   const [orderIdInput, setOrderIdInput] = useState('');
   const [phoneInput, setPhoneInput] = useState('');
@@ -24,6 +27,15 @@ export const TrackOrderPage: React.FC = () => {
       setLoading(true);
       setErrorMsg(null);
       
+      // Look in StoreContext first
+      const localFound = orders.find((o) => o.orderId.toUpperCase() === cleanOrderId);
+      if (localFound) {
+        setLoading(false);
+        setTrackedOrder(localFound);
+        if (localFound.customer?.phone) setPhoneInput(localFound.customer.phone);
+        return;
+      }
+
       api.trackOrder(cleanOrderId, '').then((result) => {
         setLoading(false);
         if (result) {
@@ -36,7 +48,7 @@ export const TrackOrderPage: React.FC = () => {
         }
       });
     }
-  }, [searchParams, pathOrderId]);
+  }, [searchParams, pathOrderId, orders]);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +61,18 @@ export const TrackOrderPage: React.FC = () => {
     setErrorMsg(null);
     setTrackedOrder(null);
 
-    const result = await api.trackOrder(orderIdInput.trim(), phoneInput.trim());
+    const cleanId = orderIdInput.trim().toUpperCase();
+    const localFound = orders.find(
+      (o) => o.orderId.toUpperCase() === cleanId && (!phoneInput || o.customer.phone.includes(phoneInput.slice(-4)))
+    );
+
+    if (localFound) {
+      setLoading(false);
+      setTrackedOrder(localFound);
+      return;
+    }
+
+    const result = await api.trackOrder(cleanId, phoneInput.trim());
     setLoading(false);
 
     if (result) {
@@ -59,34 +82,30 @@ export const TrackOrderPage: React.FC = () => {
     }
   };
 
-  const getStepStatus = (stepName: string, currentStatus: string) => {
-    const orderSteps = [
-      'PAYMENT_PENDING',
-      'PAYMENT_SUBMITTED',
-      'CONFIRMED',
-      'PROCESSING',
-      'PACKED',
-      'SHIPPED',
-      'DELIVERED'
-    ];
+  const getStageState = (stageName: Stage3Status, currentStatus: string) => {
+    const isDelivered = currentStatus === 'DELIVERED';
+    const isShipping = currentStatus === 'SHIPPING' || currentStatus === 'SHIPPED';
 
-    const currentIdx = orderSteps.indexOf(currentStatus);
-    const stepIdx = orderSteps.indexOf(stepName);
-
-    if (currentIdx >= stepIdx) {
-      return 'COMPLETED';
-    } else if (currentIdx + 1 === stepIdx) {
-      return 'IN_PROGRESS';
-    } else {
+    if (stageName === 'ORDER_RECEIVED') {
+      return isShipping || isDelivered ? 'COMPLETED' : 'IN_PROGRESS';
+    }
+    if (stageName === 'SHIPPING') {
+      if (isDelivered) return 'COMPLETED';
+      if (isShipping) return 'IN_PROGRESS';
       return 'PENDING';
     }
+    if (stageName === 'DELIVERED') {
+      if (isDelivered) return 'COMPLETED';
+      return 'PENDING';
+    }
+    return 'PENDING';
   };
 
   return (
     <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
       <SEO
-        title="Track Order | Real-Time Status — SREVIA HERBS"
-        description="Track your Srevia Herbs PUREWHITE soap order status in real time using your Order ID and mobile number."
+        title="Track Order | Real-Time 3-Stage Status — SREVIA HERBS"
+        description="Track your Srevia Herbs PUREWHITE soap order status in real time across 3 stages: Order Received, Shipping, and Delivered."
         keywords="Track Srevia Herbs order, PUREWHITE order tracking, Srevia shipment status"
         canonicalUrl="https://sreviaherbs.com/track-order"
       />
@@ -101,7 +120,7 @@ export const TrackOrderPage: React.FC = () => {
             Track Your Srevia Herbs Order
           </h1>
           <p className="text-xs text-[#242824]/70 font-light">
-            Enter your Order ID (e.g. SRV-20260829-0001) and associated 10-digit mobile number.
+            Enter your Order ID (e.g. SRV-20260903-1001) to view real-time admin tracking.
           </p>
         </div>
 
@@ -125,18 +144,17 @@ export const TrackOrderPage: React.FC = () => {
                 required
                 value={orderIdInput}
                 onChange={(e) => setOrderIdInput(e.target.value.toUpperCase())}
-                placeholder="e.g. SRV-20260829-0001"
+                placeholder="e.g. SRV-20260903-1001"
                 className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none focus:border-[#315C45]"
               />
             </div>
 
             <div className="sm:col-span-4">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                Phone Number *
+                Phone Number (Optional)
               </label>
               <input
                 type="tel"
-                required
                 maxLength={10}
                 value={phoneInput}
                 onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ''))}
@@ -166,91 +184,77 @@ export const TrackOrderPage: React.FC = () => {
               <div>
                 <span className="text-xs text-[#B89B5E] font-semibold uppercase tracking-wider">Tracking Reference</span>
                 <h2 className="font-serif-display text-3xl font-bold text-[#1F3D2E]">
-                  ORDER {trackedOrder.orderId}
+                  ORDER #{trackedOrder.orderId}
                 </h2>
                 <p className="text-xs text-[#242824]/60">Placed on: {new Date(trackedOrder.createdAt).toLocaleDateString()}</p>
               </div>
 
-              <div className="bg-[#1F3D2E] text-white px-4 py-2 rounded-2xl text-xs flex items-center gap-2">
+              <div className="bg-[#1F3D2E] text-white px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-md">
                 <ShieldCheck className="w-4 h-4 text-[#B89B5E]" />
-                <span>Status: <strong className="text-[#B89B5E]">{trackedOrder.orderStatus}</strong></span>
+                <span>Current Stage: <strong className="text-[#B89B5E] uppercase">{trackedOrder.orderStatus}</strong></span>
               </div>
             </div>
 
-            {/* Tracking Progress Timeline */}
+            {/* 3-STAGE ORDER TRACKING PROGRESS */}
             <div className="space-y-6">
-              <h3 className="font-serif-display text-xl font-bold text-[#1F3D2E]">Order Lifecycle Progress</h3>
+              <h3 className="font-serif-display text-xl font-bold text-[#1F3D2E]">Live Order Stages (Admin Controlled)</h3>
 
-              <div className="relative pl-6 space-y-8 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#F4F0E7]">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Stage 1: Order Received */}
-                <div className="relative flex items-start gap-4">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 -ml-[23px] text-white ${
-                    getStepStatus('PAYMENT_SUBMITTED', trackedOrder.orderStatus) === 'COMPLETED'
-                      ? 'bg-[#315C45]' : 'bg-[#A8B9A3]'
-                  }`}>
-                    ✓
+                <div className={`p-5 rounded-2xl border transition-all ${
+                  getStageState('ORDER_RECEIVED', trackedOrder.orderStatus) === 'COMPLETED'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-amber-50 border-amber-200 text-amber-900'
+                }`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <Clock className="w-5 h-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">STAGE 1</span>
+                      <h4 className="font-bold text-sm">Order Received</h4>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-serif-display font-bold text-base text-[#1F3D2E]">Order Received</h4>
-                    <p className="text-xs text-[#242824]/70">Customer order created in database</p>
-                  </div>
+                  <p className="text-xs opacity-80">Order & payment details received by Kathirvelan.</p>
                 </div>
 
-                {/* Stage 2: Payment Verified */}
-                <div className="relative flex items-start gap-4">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 -ml-[23px] text-white ${
-                    getStepStatus('CONFIRMED', trackedOrder.orderStatus) === 'COMPLETED'
-                      ? 'bg-[#315C45]' : 'bg-[#A8B9A3]'
-                  }`}>
-                    ✓
+                {/* Stage 2: Shipping */}
+                <div className={`p-5 rounded-2xl border transition-all ${
+                  getStageState('SHIPPING', trackedOrder.orderStatus) === 'COMPLETED'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : getStageState('SHIPPING', trackedOrder.orderStatus) === 'IN_PROGRESS'
+                    ? 'bg-blue-50 border-blue-200 text-blue-900 shadow-md ring-2 ring-blue-500/20'
+                    : 'bg-gray-50 border-gray-200 text-gray-400'
+                }`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <Truck className="w-5 h-5 text-blue-700" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">STAGE 2</span>
+                      <h4 className="font-bold text-sm">Shipping</h4>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-serif-display font-bold text-base text-[#1F3D2E]">Payment Verified</h4>
-                    <p className="text-xs text-[#242824]/70">Razorpay / UTR verification status: {trackedOrder.payment.status}</p>
-                  </div>
+                  <p className="text-xs opacity-80">Herbal batch packed & out for shipping with courier partner.</p>
                 </div>
 
-                {/* Stage 3: Order Confirmed */}
-                <div className="relative flex items-start gap-4">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 -ml-[23px] text-white ${
-                    getStepStatus('CONFIRMED', trackedOrder.orderStatus) === 'COMPLETED'
-                      ? 'bg-[#315C45]' : 'bg-[#A8B9A3]'
-                  }`}>
-                    ✓
+                {/* Stage 3: Delivered */}
+                <div className={`p-5 rounded-2xl border transition-all ${
+                  getStageState('DELIVERED', trackedOrder.orderStatus) === 'COMPLETED'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 shadow-md ring-2 ring-emerald-500/20'
+                    : 'bg-gray-50 border-gray-200 text-gray-400'
+                }`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-sm">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">STAGE 3</span>
+                      <h4 className="font-bold text-sm">Delivered</h4>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-serif-display font-bold text-base text-[#1F3D2E]">Order Confirmed</h4>
-                    <p className="text-xs text-[#242824]/70">Logged to Google Sheets dispatch schedule</p>
-                  </div>
-                </div>
-
-                {/* Stage 4: Processing & Packed */}
-                <div className="relative flex items-start gap-4">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 -ml-[23px] text-white ${
-                    getStepStatus('PACKED', trackedOrder.orderStatus) === 'COMPLETED'
-                      ? 'bg-[#315C45]' : 'bg-[#A8B9A3]'
-                  }`}>
-                    ✓
-                  </div>
-                  <div>
-                    <h4 className="font-serif-display font-bold text-base text-[#1F3D2E]">Processing & Packed</h4>
-                    <p className="text-xs text-[#242824]/70">Herbal batch selected and securely packaged</p>
-                  </div>
-                </div>
-
-                {/* Stage 5: Shipped & Delivered */}
-                <div className="relative flex items-start gap-4">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 -ml-[23px] text-white ${
-                    getStepStatus('DELIVERED', trackedOrder.orderStatus) === 'COMPLETED'
-                      ? 'bg-[#315C45]' : 'bg-[#A8B9A3]'
-                  }`}>
-                    ✓
-                  </div>
-                  <div>
-                    <h4 className="font-serif-display font-bold text-base text-[#1F3D2E]">Shipped & Delivered</h4>
-                    <p className="text-xs text-[#242824]/70">Out for delivery to address: {trackedOrder.customer.address.city}, {trackedOrder.customer.address.pincode}</p>
-                  </div>
+                  <p className="text-xs opacity-80">PUREWHITE Soap delivered to customer address.</p>
                 </div>
 
               </div>
