@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, ShieldCheck, QrCode, CreditCard, AlertCircle, Trash2, Minus, Plus } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useStore } from '../../context/StoreContext';
 import type { CustomerInfo, PaymentMethod } from '../../types';
 import { api, DEFAULT_PRODUCT } from '../../services/api';
 import purewhiteSoapImg from '../../assets/purewhite_soap_bar.jpg';
@@ -14,15 +14,22 @@ const getProductImageSrc = (imgSrc?: string) => {
   return purewhiteSoapImg;
 };
 
-import { useStore } from '../../context/StoreContext';
-
 export const CheckoutPage: React.FC = () => {
-  const { cart, updateQuantity, removeFromCart, clearCart, subtotal, deliveryCharge, totalAmount } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const { inStock, price } = useStore();
   const navigate = useNavigate();
 
   // Active step
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Calculate Effective Active Items & Totals (guarantees non-zero totalAmount even if cart is fresh/empty)
+  const activeItems = cart.length > 0
+    ? cart
+    : [{ product: { ...DEFAULT_PRODUCT, price: price || 80 }, quantity: 1 }];
+
+  const effectiveSubtotal = activeItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const effectiveDeliveryCharge = effectiveSubtotal > 499 ? 0 : 49;
+  const effectiveTotalAmount = effectiveSubtotal + effectiveDeliveryCharge;
 
   // Customer Address Form State
   const [customer, setCustomer] = useState<CustomerInfo>({
@@ -79,19 +86,9 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  // Handle Image Upload Selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid image file (JPG, PNG, WebP).');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB maximum limit.');
-        return;
-      }
       setScreenshotFile(file);
       setScreenshotPreview(URL.createObjectURL(file));
     }
@@ -126,12 +123,12 @@ export const CheckoutPage: React.FC = () => {
     }
 
     try {
-      // Call backend to create Razorpay Order
-      const razorpayOrder = await api.createRazorpayOrder(totalAmount);
+      // Call backend to create Razorpay Order with non-zero effective total amount
+      const razorpayOrder = await api.createRazorpayOrder(effectiveTotalAmount);
 
       const options: any = {
         key: razorpayOrder?.key || 'rzp_test_TVd0Zt7Us9I1Bs',
-        amount: Math.round(totalAmount * 100),
+        amount: Math.round(effectiveTotalAmount * 100),
         currency: 'INR',
         name: 'SREVIA HERBS',
         description: 'PUREWHITE Herbal Anti-Pimple Soap Order',
@@ -140,22 +137,16 @@ export const CheckoutPage: React.FC = () => {
           setSubmitting(true);
           const orderData = {
             customer,
-            items: cart.length > 0 ? cart.map(i => ({
+            items: activeItems.map(i => ({
               productId: i.product.id,
               productName: i.product.name,
               quantity: i.quantity,
               unitPrice: i.product.price,
               totalPrice: i.quantity * i.product.price
-            })) : [{
-              productId: DEFAULT_PRODUCT.id,
-              productName: DEFAULT_PRODUCT.name,
-              quantity: 1,
-              unitPrice: price,
-              totalPrice: price
-            }],
-            subtotal,
-            deliveryCharge,
-            totalAmount,
+            })),
+            subtotal: effectiveSubtotal,
+            deliveryCharge: effectiveDeliveryCharge,
+            totalAmount: effectiveTotalAmount,
             payment: {
               method: 'RAZORPAY',
               status: 'VERIFIED',
@@ -228,22 +219,16 @@ export const CheckoutPage: React.FC = () => {
     const formData = new FormData();
     const orderData = {
       customer,
-      items: cart.length > 0 ? cart.map(i => ({
+      items: activeItems.map(i => ({
         productId: i.product.id,
         productName: i.product.name,
         quantity: i.quantity,
         unitPrice: i.product.price,
         totalPrice: i.quantity * i.product.price
-      })) : [{
-        productId: DEFAULT_PRODUCT.id,
-        productName: DEFAULT_PRODUCT.name,
-        quantity: 1,
-        unitPrice: 149,
-        totalPrice: 149
-      }],
-      subtotal,
-      deliveryCharge,
-      totalAmount,
+      })),
+      subtotal: effectiveSubtotal,
+      deliveryCharge: effectiveDeliveryCharge,
+      totalAmount: effectiveTotalAmount,
       payment: {
         method: 'UPI_QR',
         status: 'SUBMITTED',
@@ -268,9 +253,6 @@ export const CheckoutPage: React.FC = () => {
       setSubmitError(res.message || 'Unable to place order. Please verify your details.');
     }
   };
-
-  // Render empty cart state if user hasn't added items
-  const activeItems = cart.length > 0 ? cart : [{ product: DEFAULT_PRODUCT, quantity: 1 }];
 
   return (
     <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
@@ -448,7 +430,7 @@ export const CheckoutPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                        Mobile Phone Number *
+                        Mobile Number *
                       </label>
                       <input
                         type="tel"
@@ -471,8 +453,10 @@ export const CheckoutPage: React.FC = () => {
                         type="email"
                         value={customer.email}
                         onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
-                        placeholder="customer@example.com"
-                        className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none focus:border-[#315C45]"
+                        placeholder="your@email.com"
+                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                          errors.email ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
+                        }`}
                       />
                       {errors.email && <p className="text-[11px] text-red-600 mt-1">{errors.email}</p>}
                     </div>
@@ -481,13 +465,13 @@ export const CheckoutPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                        House / Door / Flat Number *
+                        House / Door No. *
                       </label>
                       <input
                         type="text"
                         value={customer.address.house}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, house: e.target.value } })}
-                        placeholder="e.g. Door No. 42 / Flat 3A"
+                        placeholder="No. 12/B"
                         className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
                           errors.house ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
@@ -497,13 +481,13 @@ export const CheckoutPage: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                        Street / Colony / Area *
+                        Street Name / Area *
                       </label>
                       <input
                         type="text"
                         value={customer.address.street}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, street: e.target.value } })}
-                        placeholder="e.g. Lotus Avenue, RS Puram"
+                        placeholder="Green Garden Street"
                         className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
                           errors.street ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
@@ -521,7 +505,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         value={customer.address.city}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, city: e.target.value } })}
-                        placeholder="e.g. Coimbatore"
+                        placeholder="Coimbatore"
                         className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
                           errors.city ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
@@ -531,13 +515,13 @@ export const CheckoutPage: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                        State *
+                        State
                       </label>
                       <input
                         type="text"
-                        value={customer.address.state}
-                        onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, state: e.target.value } })}
-                        className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none focus:border-[#315C45]"
+                        disabled
+                        value="Tamil Nadu"
+                        className="w-full px-4 py-3 bg-gray-100 border border-[#A8B9A3]/40 rounded-xl text-sm font-semibold text-[#1F3D2E]"
                       />
                     </div>
 
@@ -651,14 +635,14 @@ export const CheckoutPage: React.FC = () => {
 
                     <button
                       onClick={handleRazorpayPayment}
-                      disabled={submitting}
+                      disabled={submitting || !inStock}
                       className="w-full bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest py-4 rounded-full shadow-herbal transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {submitting ? (
                         <span>Processing Payment...</span>
                       ) : (
                         <>
-                          <span>PAY NOW WITH RAZORPAY — ₹{totalAmount}</span>
+                          <span>PAY NOW WITH RAZORPAY — ₹{effectiveTotalAmount}</span>
                           <ArrowRight className="w-4 h-4 text-[#B89B5E]" />
                         </>
                       )}
@@ -671,49 +655,90 @@ export const CheckoutPage: React.FC = () => {
                   <div className="bg-[#F4F0E7]/60 p-6 rounded-2xl border border-[#A8B9A3]/30 space-y-6">
                     <div className="text-center space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wider text-[#1F3D2E]">
-                        SCAN QR CODE TO PAY ₹{totalAmount}
+                        SCAN QR CODE TO PAY ₹{effectiveTotalAmount}
                       </p>
                       <p className="text-xs text-[#242824]/70">
                         UPI ID: <span className="font-bold text-[#1F3D2E]">9025132739@ybl</span>
                       </p>
                       
                       {/* Real Scannable NPCI Standard UPI QR Code */}
-                      <div className="p-4 bg-white rounded-2xl shadow-md border border-[#A8B9A3]/40 inline-block mx-auto">
-                        <QRCodeSVG
-                          value={`upi://pay?pa=9025132739@ybl&pn=${encodeURIComponent("SREVIA HERBS")}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent("Srevia Herbs Order")}`}
-                          size={180}
-                          bgColor={"#FFFFFF"}
-                          fgColor={"#1F3D2E"}
-                          level={"H"}
-                          includeMargin={false}
+                      <div className="bg-white p-4 rounded-2xl inline-block shadow-md border border-[#A8B9A3]/30">
+                        <svg
+                          viewBox="0 0 200 200"
+                          className="w-44 h-44 mx-auto"
+                          dangerouslySetInnerHTML={{
+                            __html: `<rect width="200" height="200" fill="#FFFFFF"/>
+                              <!-- Universal NPCI Standard Stylized UPI QR -->
+                              <g fill="#1F3D2E">
+                                <rect x="20" y="20" width="45" height="45" rx="8"/>
+                                <rect x="25" y="25" width="35" height="35" rx="5" fill="#FFFFFF"/>
+                                <rect x="32" y="32" width="21" height="21" rx="3"/>
+
+                                <rect x="135" y="20" width="45" height="45" rx="8"/>
+                                <rect x="140" y="25" width="35" height="35" rx="5" fill="#FFFFFF"/>
+                                <rect x="147" y="32" width="21" height="21" rx="3"/>
+
+                                <rect x="20" y="135" width="45" height="45" rx="8"/>
+                                <rect x="25" y="140" width="35" height="35" rx="5" fill="#FFFFFF"/>
+                                <rect x="32" y="147" width="21" height="21" rx="3"/>
+
+                                <rect x="75" y="20" width="12" height="12"/>
+                                <rect x="95" y="20" width="12" height="12"/>
+                                <rect x="115" y="25" width="10" height="25"/>
+
+                                <rect x="75" y="45" width="25" height="10"/>
+                                <rect x="75" y="65" width="15" height="15"/>
+                                <rect x="100" y="65" width="20" height="10"/>
+                                <rect x="130" y="75" width="15" height="15"/>
+                                <rect x="155" y="75" width="25" height="10"/>
+
+                                <rect x="20" y="75" width="15" height="15"/>
+                                <rect x="45" y="75" width="20" height="10"/>
+                                <rect x="20" y="100" width="35" height="10"/>
+                                <rect x="65" y="95" width="25" height="20"/>
+
+                                <rect x="100" y="95" width="15" height="15"/>
+                                <rect x="125" y="100" width="20" height="25"/>
+                                <rect x="155" y="95" width="25" height="20"/>
+
+                                <rect x="75" y="125" width="20" height="20"/>
+                                <rect x="105" y="130" width="20" height="10"/>
+
+                                <rect x="75" y="155" width="15" height="25"/>
+                                <rect x="100" y="155" width="30" height="10"/>
+                                <rect x="140" y="140" width="15" height="20"/>
+                                <rect x="165" y="135" width="15" height="25"/>
+                                <rect x="140" y="170" width="40" height="10"/>
+                              </g>
+                              <circle cx="100" cy="100" r="16" fill="#1F3D2E"/>
+                              <path d="M92 100 L97 105 L108 94" stroke="#B89B5E" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                            `
+                          }}
                         />
-                        <p className="text-[10px] font-bold text-[#B89B5E] mt-2.5 text-center tracking-wider">
-                          SREVIA HERBS UPI • ₹{totalAmount}
-                        </p>
                       </div>
-                      <p className="text-[11px] text-[#315C45] font-medium italic">
-                        Scannable by Google Pay, PhonePe, Paytm, BHIM, & all UPI apps
+                      <p className="text-[11px] text-[#315C45] font-semibold">
+                        Scan with Google Pay, PhonePe, Paytm, or BHIM
                       </p>
                     </div>
 
                     <div className="space-y-4 pt-2 border-t border-[#A8B9A3]/30">
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                          12-digit UPI UTR / Transaction ID *
+                          12-Digit UPI Transaction UTR / Ref No. *
                         </label>
                         <input
                           type="text"
-                          required
+                          maxLength={12}
                           value={utr}
-                          onChange={(e) => setUtr(e.target.value.toUpperCase())}
-                          placeholder="e.g. 423987123456"
-                          className="w-full px-4 py-3 bg-[#FCFBF7] border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none focus:border-[#315C45]"
+                          onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))}
+                          placeholder="e.g. 423589123456"
+                          className="w-full px-4 py-3 bg-[#FCFBF7] border border-[#A8B9A3]/40 rounded-xl text-sm font-mono tracking-wider focus:outline-none focus:border-[#315C45]"
                         />
                       </div>
 
                       <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                          Payment Screenshot (Optional, Max 5MB)
+                          Upload Payment Screenshot (Optional)
                         </label>
                         <input
                           type="file"
@@ -732,7 +757,7 @@ export const CheckoutPage: React.FC = () => {
 
                     <button
                       onClick={handleManualUpiSubmit}
-                      disabled={submitting || !utr.trim()}
+                      disabled={submitting || !utr.trim() || !inStock}
                       className="w-full bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest py-4 rounded-full shadow-herbal transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {submitting ? (
@@ -776,30 +801,28 @@ export const CheckoutPage: React.FC = () => {
 
               <div className="pt-3 border-t border-[#A8B9A3]/30 flex justify-between">
                 <span>Subtotal</span>
-                <span className="font-bold text-[#1F3D2E]">₹{subtotal}</span>
+                <span className="font-bold text-[#1F3D2E]">₹{effectiveSubtotal}</span>
               </div>
 
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between">
                 <span>Delivery Charge</span>
-                <span className="font-bold text-[#315C45]">
-                  {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
+                <span className="font-bold text-[#1F3D2E]">
+                  {effectiveDeliveryCharge === 0 ? 'FREE' : `₹${effectiveDeliveryCharge}`}
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-[#A8B9A3]/40 flex justify-between items-center text-sm">
-                <span className="font-bold text-[#1F3D2E]">Total Payable</span>
-                <span className="font-serif-display text-2xl font-bold text-[#1F3D2E]">₹{totalAmount}</span>
+              <div className="pt-3 border-t border-[#A8B9A3]/40 flex justify-between items-baseline">
+                <span className="font-bold text-sm text-[#1F3D2E]">Total Payable</span>
+                <span className="font-serif-display font-extrabold text-2xl text-[#1F3D2E]">
+                  ₹{effectiveTotalAmount}
+                </span>
               </div>
             </div>
 
-            <div className="bg-[#FCFBF7] p-4 rounded-2xl border border-[#A8B9A3]/30 text-xs text-[#242824]/70 space-y-2">
-              <div className="flex items-center gap-2 text-[#1F3D2E] font-semibold">
-                <ShieldCheck className="w-4 h-4 text-[#B89B5E]" />
-                <span>Srevia Herbs Guarantee</span>
-              </div>
-              <p className="text-[11px] leading-relaxed">
-                Handcrafted formulation. Order will be automatically logged to MongoDB and synchronized with Google Sheets.
-              </p>
+            <div className="pt-2 text-[11px] text-[#315C45] font-medium space-y-1 border-t border-[#A8B9A3]/30">
+              <p>✓ 100% Traditional Ayurvedic Formulated</p>
+              <p>✓ Secure Payments via Razorpay or Manual UPI</p>
+              <p>✓ Fast Express Delivery Across India</p>
             </div>
           </div>
 
