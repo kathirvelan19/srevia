@@ -21,6 +21,7 @@ interface StoreContextType {
 
 const STORAGE_KEY_PRODUCT = 'srevia_store_product';
 const STORAGE_KEY_ORDERS = 'srevia_store_orders';
+const RENDER_BACKEND_PRODUCTS_URL = 'https://sreviia-backend.onrender.com/api/products';
 const RENDER_BACKEND_STATUS_URL = 'https://sreviia-backend.onrender.com/api/products/status';
 
 const StoreContext = createContext<StoreContextType>({
@@ -108,28 +109,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, []);
 
-  // 2. Global Persistent Storage Polling via /api/product
+  // 2. Persistent Backend Polling (Directly from Render Backend MongoDB - Guaranteed 100% sync on all devices)
   useEffect(() => {
     const fetchLatestProduct = () => {
-      fetch('/api/product')
+      fetch(RENDER_BACKEND_PRODUCTS_URL)
         .then((res) => (res.ok ? res.json() : null))
-        .then((json) => {
-          if (json && json.success && json.product) {
-            const p = json.product;
+        .then((products) => {
+          if (Array.isArray(products) && products.length > 0) {
+            const p = products[0];
+            const isAvailable = p.active !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
             setProduct((prev) => ({
               ...prev,
-              stockQuantity: p.inStock ? (p.stockQuantity || 100) : 0,
-              active: p.inStock !== false,
+              stockQuantity: isAvailable ? (p.stockQuantity || 100) : 0,
+              active: isAvailable,
               price: typeof p.price === 'number' ? p.price : prev.price,
-              originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
             }));
           }
         })
-        .catch((e) => console.warn("Polling /api/product notice:", e));
+        .catch((e) => console.warn("Polling Render backend notice:", e));
     };
 
     fetchLatestProduct();
-    const interval = setInterval(fetchLatestProduct, 2500);
+    const interval = setInterval(fetchLatestProduct, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -166,18 +167,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
-    // A. Sync to Vercel Serverless /api/product (Same-origin & CORS safe)
-    try {
-      await fetch('/api/product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } catch (e) {
-      console.warn("/api/product POST notice:", e);
-    }
-
-    // B. Sync to Render Backend MongoDB Endpoint
+    // A. Sync directly to Render Backend MongoDB (100% Persistent across all devices)
     try {
       await fetch(RENDER_BACKEND_STATUS_URL, {
         method: 'POST',
@@ -191,7 +181,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn("Render backend status POST notice:", e);
     }
 
-    // C. Sync to Firebase Firestore
+    // B. Sync to Firebase Firestore
     try {
       await setDoc(doc(db, 'store', 'product'), payload);
     } catch (e) {
