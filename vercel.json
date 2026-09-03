@@ -7,6 +7,10 @@
       "destination": "/api/contact.js"
     },
     {
+      "source": "/api/product",
+      "destination": "/api/product.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

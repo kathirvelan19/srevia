@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { DEFAULT_PRODUCT, api } from '../services/api';
 import type { Product, Order } from '../types';
 
@@ -75,6 +77,55 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
   });
 
+  // 1. Firebase Firestore Real-Time Listener (Instant Global Sync Across All Devices & Users)
+  useEffect(() => {
+    let unsubscribe = () => {};
+    try {
+      const productRef = doc(db, 'store', 'product');
+      unsubscribe = onSnapshot(
+        productRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            setProduct((prev) => ({
+              ...prev,
+              stockQuantity: data.inStock ? (data.stockQuantity || 100) : 0,
+              active: data.inStock !== false,
+              price: typeof data.price === 'number' ? data.price : prev.price,
+              originalPrice: typeof data.originalPrice === 'number' ? data.originalPrice : prev.originalPrice,
+            }));
+          }
+        },
+        (error) => {
+          console.warn("Firestore snapshot notice:", error);
+        }
+      );
+    } catch (e) {
+      console.warn("Firestore setup notice:", e);
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  // 2. Initial Serverless API Sync (/api/product)
+  useEffect(() => {
+    fetch('/api/product')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.success && data.product) {
+          const p = data.product;
+          setProduct((prev) => ({
+            ...prev,
+            stockQuantity: p.inStock ? (p.stockQuantity || 100) : 0,
+            active: p.inStock !== false,
+            price: typeof p.price === 'number' ? p.price : prev.price,
+            originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
+          }));
+        }
+      })
+      .catch((e) => console.warn("/api/product fetch notice:", e));
+  }, []);
+
   const inStock = product.stockQuantity > 0 && product.active !== false;
   const price = product.price;
   const originalPrice = product.originalPrice;
@@ -95,12 +146,48 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [orders]);
 
+  const syncProductToBackend = async (stockAvailable: boolean, newPrice?: number, newOriginalPrice?: number) => {
+    const p = newPrice !== undefined ? newPrice : price;
+    const op = newOriginalPrice !== undefined ? newOriginalPrice : (originalPrice || 120);
+
+    // Sync to Firebase Firestore (Real-Time for all users)
+    try {
+      await setDoc(doc(db, 'store', 'product'), {
+        inStock: stockAvailable,
+        stockQuantity: stockAvailable ? 100 : 0,
+        active: stockAvailable,
+        price: p,
+        originalPrice: op,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("Firestore setDoc notice:", e);
+    }
+
+    // Sync to Vercel Serverless /api/product
+    try {
+      await fetch('/api/product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inStock: stockAvailable,
+          stockQuantity: stockAvailable ? 100 : 0,
+          price: p,
+          originalPrice: op,
+        }),
+      });
+    } catch (e) {
+      console.warn("/api/product POST notice:", e);
+    }
+  };
+
   const setInStock = (stockAvailable: boolean) => {
     setProduct((prev) => ({
       ...prev,
       stockQuantity: stockAvailable ? 100 : 0,
       active: stockAvailable,
     }));
+    syncProductToBackend(stockAvailable);
   };
 
   const updateProduct = (newPrice: number, newOriginalPrice: number, stockAvailable: boolean) => {
@@ -112,6 +199,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       active: stockAvailable,
       discount: newOriginalPrice > newPrice ? `Save ${Math.round(((newOriginalPrice - newPrice) / newOriginalPrice) * 100)}%` : '',
     }));
+    syncProductToBackend(stockAvailable, newPrice, newOriginalPrice);
   };
 
   const updateOrderStatus = async (orderId: string, stage: Stage3Status) => {
@@ -123,17 +211,32 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       )
     );
 
-    // Also call backend API
+    // Sync to Firebase Firestore order status
+    try {
+      await setDoc(doc(db, 'orders', orderId.toUpperCase()), {
+        orderId: orderId.toUpperCase(),
+        orderStatus: stage,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (e) {
+      console.warn("Firestore order status setDoc notice:", e);
+    }
+
     const token = localStorage.getItem('srevia_admin_token') || 'admin_session';
     try {
       await api.updateOrderStatus(token, orderId, stage);
     } catch (e) {
-      console.warn("Backend status update sync note:", e);
+      console.warn("Backend status update sync notice:", e);
     }
   };
 
   const addNewOrder = (newOrder: Order) => {
     setOrders((prev) => [newOrder, ...prev]);
+    try {
+      setDoc(doc(db, 'orders', newOrder.orderId.toUpperCase()), newOrder);
+    } catch (e) {
+      console.warn("Firestore new order setDoc notice:", e);
+    }
   };
 
   const refreshOrders = async () => {
@@ -145,7 +248,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setOrders(remoteOrders);
         }
       } catch (e) {
-        console.warn("Remote order sync note:", e);
+        console.warn("Remote order sync notice:", e);
       }
     }
   };

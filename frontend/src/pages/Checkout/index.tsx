@@ -14,8 +14,11 @@ const getProductImageSrc = (imgSrc?: string) => {
   return purewhiteSoapImg;
 };
 
+import { useStore } from '../../context/StoreContext';
+
 export const CheckoutPage: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, subtotal, deliveryCharge, totalAmount } = useCart();
+  const { inStock } = useStore();
   const navigate = useNavigate();
 
   // Active step
@@ -250,7 +253,7 @@ export const CheckoutPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Checkout Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+        <div className="text-center max-w-2xl mx-auto mb-6 space-y-2">
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#B89B5E]">
             SECURE ORDER CHECKOUT
           </span>
@@ -258,6 +261,15 @@ export const CheckoutPage: React.FC = () => {
             Srevia Herbs Checkout
           </h1>
         </div>
+
+        {!inStock && (
+          <div className="max-w-3xl mx-auto mb-8 bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+              <span>PUREWHITE Soap is currently Out of Stock (Unavailable). New order placement is temporarily paused.</span>
+            </div>
+          </div>
+        )}
 
         {/* Checkout Steps Progress Bar */}
         <div className="max-w-3xl mx-auto mb-12">
