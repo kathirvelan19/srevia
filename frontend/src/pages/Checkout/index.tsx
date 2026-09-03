@@ -181,7 +181,14 @@ export const CheckoutPage: React.FC = () => {
         prefill: {
           name: customer.name || 'Kathirvelan',
           email: customer.email || 'kathirvelankvr@gmail.com',
-          contact: customer.phone || '9025132739'
+          contact: customer.phone || '9025132739',
+          method: 'upi'
+        },
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true
         },
         theme: {
           color: '#1F3D2E'
