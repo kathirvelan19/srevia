@@ -181,14 +181,39 @@ export const CheckoutPage: React.FC = () => {
         prefill: {
           name: customer.name || 'Kathirvelan',
           email: customer.email || 'kathirvelankvr@gmail.com',
-          contact: customer.phone || '9025132739',
-          method: 'upi'
+          contact: customer.phone || '9025132739'
         },
-        method: {
-          upi: true,
-          card: true,
-          netbanking: true,
-          wallet: true
+        config: {
+          display: {
+            sequence: ['block.upi', 'block.other'],
+            blocks: {
+              upi: {
+                name: 'Pay via UPI / GPay / PhonePe / Paytm / QR',
+                instruments: [
+                  {
+                    method: 'upi'
+                  }
+                ]
+              },
+              other: {
+                name: 'Cards, Netbanking & Wallets',
+                instruments: [
+                  {
+                    method: 'card'
+                  },
+                  {
+                    method: 'netbanking'
+                  },
+                  {
+                    method: 'wallet'
+                  }
+                ]
+              }
+            },
+            preferences: {
+              show_default_blocks: true
+            }
+          }
         },
         theme: {
           color: '#1F3D2E'
