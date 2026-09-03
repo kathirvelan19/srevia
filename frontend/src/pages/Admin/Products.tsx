@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft } from 'lucide-react';
-import { DEFAULT_PRODUCT } from '../../services/api';
+import { Save, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { useStore } from '../../context/StoreContext';
 
 export const AdminProductsPage: React.FC = () => {
-  const [product, setProduct] = useState(DEFAULT_PRODUCT);
+  const { inStock, price, originalPrice, updateProduct } = useStore();
+  
+  const [currentPrice, setCurrentPrice] = useState(price);
+  const [currentOriginalPrice, setCurrentOriginalPrice] = useState(originalPrice);
+  const [stockAvailable, setStockAvailable] = useState(inStock);
   const [saved, setSaved] = useState(false);
   const navigate = useNavigate();
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    updateProduct(Number(currentPrice), Number(currentOriginalPrice), stockAvailable);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -35,8 +40,9 @@ export const AdminProductsPage: React.FC = () => {
         </div>
 
         {saved && (
-          <div className="bg-[#315C45]/10 text-[#315C45] p-4 rounded-2xl text-xs border border-[#315C45]/30 font-semibold">
-            ✓ Product details and stock level updated successfully!
+          <div className="bg-[#315C45]/10 text-[#315C45] p-4 rounded-2xl text-xs border border-[#315C45]/30 font-semibold flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#315C45]" />
+            <span>Product pricing and availability updated live across the website!</span>
           </div>
         )}
 
@@ -44,25 +50,25 @@ export const AdminProductsPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                Product Name *
+                Selling Price (INR ₹) *
               </label>
               <input
-                type="text"
-                value={product.name}
-                onChange={(e) => setProduct({ ...product, name: e.target.value })}
-                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none"
+                type="number"
+                value={currentPrice}
+                onChange={(e) => setCurrentPrice(Number(e.target.value))}
+                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none font-bold text-[#315C45]"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                Price (INR ₹) *
+                Original MRP Price (INR ₹) *
               </label>
               <input
                 type="number"
-                value={product.price}
-                onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
-                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none font-bold text-[#315C45]"
+                value={currentOriginalPrice}
+                onChange={(e) => setCurrentOriginalPrice(Number(e.target.value))}
+                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none font-bold text-gray-500"
               />
             </div>
           </div>
@@ -70,50 +76,26 @@ export const AdminProductsPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                Stock Quantity *
-              </label>
-              <input
-                type="number"
-                value={product.stockQuantity}
-                onChange={(e) => setProduct({ ...product, stockQuantity: Number(e.target.value) })}
-                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-                Status
+                Stock Availability *
               </label>
               <select
-                value={product.active ? 'active' : 'inactive'}
-                onChange={(e) => setProduct({ ...product, active: e.target.value === 'active' })}
-                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none"
+                value={stockAvailable ? 'in_stock' : 'out_of_stock'}
+                onChange={(e) => setStockAvailable(e.target.value === 'in_stock')}
+                className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none font-bold"
               >
-                <option value="active">Active (Available for order)</option>
-                <option value="inactive">Inactive (Hidden)</option>
+                <option value="in_stock">In Stock (Available for Purchase)</option>
+                <option value="out_of_stock">Out of Stock (Unavailable)</option>
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] mb-1.5">
-              Product Description *
-            </label>
-            <textarea
-              rows={4}
-              value={product.description}
-              onChange={(e) => setProduct({ ...product, description: e.target.value })}
-              className="w-full px-4 py-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-sm focus:outline-none"
-            />
-          </div>
-
-          <div className="pt-4 border-t border-[#F4F0E7] flex justify-end">
+          <div className="pt-4 border-t border-[#F4F0E7]">
             <button
               type="submit"
-              className="bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest px-8 py-3.5 rounded-full shadow-herbal flex items-center gap-2"
+              className="bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-wider px-8 py-3.5 rounded-full shadow-md transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4 text-[#B89B5E]" />
-              <span>SAVE CHANGES</span>
+              <span>Save Product Updates</span>
             </button>
           </div>
         </form>

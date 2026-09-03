@@ -4,13 +4,24 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { DEFAULT_PRODUCT } from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import { useStore } from '../../context/StoreContext';
 
 export const FinalCTASection: React.FC = () => {
   const { addToCart } = useCart();
+  const { inStock, price, originalPrice } = useStore();
   const navigate = useNavigate();
 
+  const activeProduct = {
+    ...DEFAULT_PRODUCT,
+    price,
+    originalPrice,
+    stockQuantity: inStock ? 100 : 0,
+    active: inStock,
+  };
+
   const handleShopNow = () => {
-    addToCart(DEFAULT_PRODUCT, 1);
+    if (!inStock) return;
+    addToCart(activeProduct, 1);
     navigate('/checkout');
   };
 
@@ -61,10 +72,15 @@ export const FinalCTASection: React.FC = () => {
           className="pt-4"
         >
           <button
+            disabled={!inStock}
             onClick={handleShopNow}
-            className="bg-[#B89B5E] hover:bg-[#D4AF37] text-[#1F3D2E] font-bold text-xs uppercase tracking-[0.2em] px-10 py-5 rounded-full shadow-2xl transition-all transform hover:-translate-y-1 active-press inline-flex items-center gap-3 group"
+            className={`font-bold text-xs uppercase tracking-[0.2em] px-10 py-5 rounded-full shadow-2xl transition-all inline-flex items-center gap-3 group ${
+              inStock
+                ? 'bg-[#B89B5E] hover:bg-[#D4AF37] text-[#1F3D2E] transform hover:-translate-y-1 active-press'
+                : 'bg-gray-400 text-gray-700 cursor-not-allowed'
+            }`}
           >
-            <span>SHOP PUREWHITE — ₹80</span>
+            <span>{inStock ? `SHOP PUREWHITE — ₹${price}` : 'OUT OF STOCK'}</span>
             <ArrowRight className="w-4 h-4 text-[#1F3D2E] group-hover:translate-x-1.5 transition-transform" />
           </button>
         </motion.div>

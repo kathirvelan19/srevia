@@ -1,24 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Minus, Plus, ShoppingBag, ArrowRight, CheckCircle2, Shield } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ArrowRight, XCircle } from 'lucide-react';
 import { DEFAULT_PRODUCT } from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import { useStore } from '../../context/StoreContext';
 import heroImg from '../../assets/srevia_hero_soap.jpg';
 
 export const ProductShowcaseSection: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const { addToCart } = useCart();
+  const { inStock, price, originalPrice } = useStore();
   const navigate = useNavigate();
 
+  const activeProduct = {
+    ...DEFAULT_PRODUCT,
+    price,
+    originalPrice,
+    stockQuantity: inStock ? 100 : 0,
+    active: inStock,
+  };
+
   const handleBuyNow = () => {
-    addToCart(DEFAULT_PRODUCT, quantity);
+    if (!inStock) return;
+    addToCart(activeProduct, quantity);
     navigate('/checkout');
   };
 
   const handleAddToCart = () => {
-    addToCart(DEFAULT_PRODUCT, quantity);
+    if (!inStock) return;
+    addToCart(activeProduct, quantity);
   };
+
+  const discountPercent = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   return (
     <section id="product-showcase" className="py-24 bg-[#F4F0E7]/60 border-y border-[#F4F0E7]">
@@ -57,7 +71,7 @@ export const ProductShowcaseSection: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="bg-[#FCFBF7] rounded-3xl p-6 sm:p-10 lg:p-12 shadow-herbal border border-[#A8B9A3]/30 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center"
+          className="bg-[#FCFBF7] rounded-3xl p-6 sm:p-10 lg:p-12 shadow-herbal border border-[#A8B9A3]/30 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative"
         >
           
           {/* Left Visual */}
@@ -66,10 +80,18 @@ export const ProductShowcaseSection: React.FC = () => {
               <img
                 src={heroImg}
                 alt="PUREWHITE Soap Box and Bar"
-                className="w-full h-auto object-cover rounded-xl shadow-sm transform group-hover:scale-105 transition-transform duration-500"
+                className={`w-full h-auto object-cover rounded-xl shadow-sm transform group-hover:scale-105 transition-transform duration-500 ${!inStock ? 'opacity-60 grayscale-[30%]' : ''}`}
               />
-              <div className="absolute top-6 left-6 bg-[#315C45] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md">
-                Save 33% • ₹80 Special
+              <div className="absolute top-6 left-6 flex flex-col gap-2">
+                {inStock ? (
+                  <div className="bg-[#315C45] text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md">
+                    {discountPercent > 0 ? `Save ${discountPercent}% • ` : ''}₹{price} Special
+                  </div>
+                ) : (
+                  <div className="bg-rose-600 text-white text-[10px] font-bold px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
+                    <XCircle className="w-3.5 h-3.5" /> Out of Stock (Unavailable)
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -85,15 +107,19 @@ export const ProductShowcaseSection: React.FC = () => {
                 <div className="text-right">
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-extrabold text-[#315C45]">
-                      ₹80
+                      ₹{price}
                     </span>
-                    <span className="text-base font-medium text-gray-400 line-through">
-                      ₹120
-                    </span>
+                    {originalPrice > price && (
+                      <span className="text-base font-medium text-gray-400 line-through">
+                        ₹{originalPrice}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[11px] font-bold text-[#315C45] bg-[#315C45]/10 px-2 py-0.5 rounded">
-                    Save 33%
-                  </span>
+                  {discountPercent > 0 && (
+                    <span className="text-[11px] font-bold text-[#315C45] bg-[#315C45]/10 px-2 py-0.5 rounded">
+                      Save {discountPercent}%
+                    </span>
+                  )}
                 </div>
               </div>
               <p className="text-xs text-[#B89B5E] font-semibold uppercase tracking-wider mt-1">
@@ -101,82 +127,75 @@ export const ProductShowcaseSection: React.FC = () => {
               </p>
             </div>
 
-            <p className="text-sm text-[#242824]/85 leading-relaxed font-normal">
-              {DEFAULT_PRODUCT.description}
+            <p className="text-xs text-[#242824]/70 leading-relaxed">
+              Clinically proven to reduce acne by up to 95% in just 4 weeks. Formulated with organic Neem, Holy Basil Tulsi, and cold-pressed coconut oil.
             </p>
 
-            {/* Benefits Checklist */}
-            <div className="space-y-2.5 pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1F3D2E]">Key Benefits:</h4>
-              {DEFAULT_PRODUCT.benefits.map((benefit, idx) => (
-                <div key={idx} className="flex items-start gap-2.5 text-xs text-[#242824]">
-                  <CheckCircle2 className="w-4 h-4 text-[#315C45] shrink-0 mt-0.5" />
-                  <span>{benefit}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Dynamic Quantity Selector & Pricing */}
-            <div className="pt-4 border-t border-[#F4F0E7] space-y-4">
-              
+            {/* Quantity Selector */}
+            <div className="bg-[#F4F0E7]/60 p-5 rounded-2xl border border-[#A8B9A3]/30 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#1F3D2E]">Quantity</span>
-                
-                <div className="flex items-center gap-3 bg-[#F4F0E7] px-4 py-2 rounded-full border border-[#A8B9A3]/40 shadow-inner">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#1F3D2E]">
+                  Quantity
+                </span>
+                <div className="flex items-center gap-3 bg-[#FCFBF7] px-4 py-1.5 rounded-full border border-[#A8B9A3]/40">
                   <button
+                    disabled={!inStock}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] transition-colors focus:outline-none active-press"
+                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40"
                   >
-                    <Minus className="w-4 h-4" />
+                    <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="font-bold text-sm text-[#1F3D2E] w-6 text-center">{quantity}</span>
+                  <span className="font-bold text-sm text-[#1F3D2E] w-6 text-center">
+                    {quantity}
+                  </span>
                   <button
+                    disabled={!inStock}
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] transition-colors focus:outline-none active-press"
+                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm py-3 px-5 bg-[#F4F0E7]/70 rounded-2xl border border-[#A8B9A3]/30">
-                <span className="text-xs text-[#242824]/70 font-medium">Total Amount:</span>
-                <span className="font-bold text-lg text-[#1F3D2E]">
-                  {quantity} × ₹80 = <span className="text-[#315C45]">₹{quantity * 80}</span>
+              <div className="flex items-center justify-between text-xs py-2 px-4 bg-[#FCFBF7] rounded-xl border border-[#F4F0E7]">
+                <span className="text-[#242824]/70 font-medium">Subtotal</span>
+                <span className="font-bold text-base text-[#1F3D2E]">
+                  ₹{quantity * price}
                 </span>
               </div>
 
-              {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
+                  disabled={!inStock}
                   onClick={handleAddToCart}
-                  className="w-full bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/30 font-semibold text-xs uppercase tracking-wider py-4 rounded-full transition-all active-press flex items-center justify-center gap-2"
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 ${
+                    inStock
+                      ? 'bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/40'
+                      : 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed'
+                  }`}
                 >
                   <ShoppingBag className="w-4 h-4 text-[#B89B5E]" />
-                  <span>Add to Cart</span>
+                  <span>{inStock ? 'Add to Cart' : 'Out of Stock'}</span>
                 </button>
 
                 <button
+                  disabled={!inStock}
                   onClick={handleBuyNow}
-                  className="w-full bg-[#1F3D2E] hover:bg-[#315C45] text-white font-semibold text-xs uppercase tracking-wider py-4 rounded-full shadow-herbal transition-all transform hover:-translate-y-0.5 active-press flex items-center justify-center gap-2 group"
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-all flex items-center justify-center gap-2 ${
+                    inStock
+                      ? 'bg-[#1F3D2E] hover:bg-[#315C45] text-white shadow-herbal'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  <span>BUY NOW</span>
-                  <ArrowRight className="w-4 h-4 text-[#B89B5E] group-hover:translate-x-1 transition-transform" />
+                  <span>{inStock ? 'BUY NOW' : 'UNAVAILABLE'}</span>
+                  <ArrowRight className="w-4 h-4 text-[#B89B5E]" />
                 </button>
               </div>
-
-              {/* Trust statement */}
-              <div className="pt-2 flex items-center gap-2 text-xs text-[#242824]/70 font-medium">
-                <Shield className="w-4 h-4 text-[#315C45]" />
-                <span>Made in small batches with carefully selected botanicals.</span>
-              </div>
-
             </div>
 
           </div>
-
         </motion.div>
-
       </div>
     </section>
   );

@@ -1,14 +1,26 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
-import { ArrowRight, Star, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, XCircle } from 'lucide-react';
 import { DEFAULT_PRODUCT } from '../../services/api';
 import { useCart } from '../../context/CartContext';
+import { useStore } from '../../context/StoreContext';
 import heroImg from '../../assets/srevia_hero_soap.jpg';
 
 export const HeroSection: React.FC = () => {
   const { addToCart } = useCart();
+  const { inStock, price, originalPrice } = useStore();
   const navigate = useNavigate();
+
+  const activeProduct = {
+    ...DEFAULT_PRODUCT,
+    price,
+    originalPrice,
+    stockQuantity: inStock ? 100 : 0,
+    active: inStock,
+  };
+
+  const discountPercent = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   // Mouse Parallax for Desktop
   const mouseX = useMotionValue(0);
@@ -29,7 +41,8 @@ export const HeroSection: React.FC = () => {
   };
 
   const handleShopNow = () => {
-    addToCart(DEFAULT_PRODUCT, 1);
+    if (!inStock) return;
+    addToCart(activeProduct, 1);
     navigate('/checkout');
   };
 
@@ -120,31 +133,32 @@ export const HeroSection: React.FC = () => {
             >
               <div className="flex items-baseline gap-2.5">
                 <span className="text-3xl font-extrabold text-[#1F3D2E] font-sans">
-                  ₹80
+                  ₹{price}
                 </span>
-                <span className="text-base font-medium text-gray-400 line-through">
-                  ₹120
-                </span>
-                <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                  Save 33%
-                </span>
+                {originalPrice > price && (
+                  <span className="text-base font-medium text-gray-400 line-through">
+                    ₹{originalPrice}
+                  </span>
+                )}
+                {discountPercent > 0 && (
+                  <span className="bg-[#315C45] text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    Save {discountPercent}%
+                  </span>
+                )}
                 <span className="text-xs font-normal text-[#242824]/60">/ 100g bar</span>
               </div>
 
               <div className="h-4 w-[1px] bg-[#A8B9A3]/50 hidden sm:block" />
 
-              <div className="flex items-center gap-1.5 bg-[#F4F0E7] px-3 py-1.5 rounded-full border border-[#A8B9A3]/30">
-                <div className="flex text-[#B89B5E]">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                  ))}
-                </div>
-                <span className="font-bold text-[#1F3D2E]">4.9 / 5.0</span>
-              </div>
-
-              <span className="text-[#315C45] font-semibold">
-                • Handcrafted in small batches
-              </span>
+              {inStock ? (
+                <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> In Stock
+                </span>
+              ) : (
+                <span className="bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-200 flex items-center gap-1">
+                  <XCircle className="w-3.5 h-3.5" /> Out of Stock
+                </span>
+              )}
             </motion.div>
 
             {/* CTAs */}
@@ -155,10 +169,15 @@ export const HeroSection: React.FC = () => {
               className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2"
             >
               <button
+                disabled={!inStock}
                 onClick={handleShopNow}
-                className="bg-[#1F3D2E] hover:bg-[#315C45] text-[#FCFBF7] font-semibold text-xs uppercase tracking-[0.18em] px-9 py-4 rounded-full shadow-herbal hover:shadow-herbal-hover transition-all transform hover:-translate-y-0.5 active-press flex items-center justify-center gap-3 group"
+                className={`font-semibold text-xs uppercase tracking-[0.18em] px-9 py-4 rounded-full transition-all flex items-center justify-center gap-3 group ${
+                  inStock
+                    ? 'bg-[#1F3D2E] hover:bg-[#315C45] text-[#FCFBF7] shadow-herbal hover:shadow-herbal-hover transform hover:-translate-y-0.5'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                <span>Add to Cart</span>
+                <span>{inStock ? 'Add to Cart' : 'OUT OF STOCK'}</span>
                 <ArrowRight className="w-4 h-4 text-[#B89B5E] group-hover:translate-x-1.5 transition-transform" />
               </button>
 
