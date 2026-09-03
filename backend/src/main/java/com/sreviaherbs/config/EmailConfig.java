@@ -20,7 +20,7 @@ public class EmailConfig {
     @Value("${admin.email:kathirvelankvr@gmail.com}")
     private String adminEmail;
 
-    @Value("${app.website.url:http://localhost:5181}")
+    @Value("${app.website.url:https://srevia.vercel.app}")
     private String websiteUrl;
 
     @PostConstruct

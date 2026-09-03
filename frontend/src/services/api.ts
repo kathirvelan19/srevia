@@ -1,7 +1,7 @@
 import type { Product, Order, ContactMessage } from '../types';
 import purewhiteSoapImg from '../assets/purewhite_soap_bar.jpg';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://sreviia-backend.onrender.com/api' : 'http://localhost:8080/api');
 
 // Initial Mock Seed Product
 export const DEFAULT_PRODUCT: Product = {
