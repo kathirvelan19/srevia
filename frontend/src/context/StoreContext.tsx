@@ -21,7 +21,7 @@ interface StoreContextType {
 
 const STORAGE_KEY_PRODUCT = 'srevia_store_product';
 const STORAGE_KEY_ORDERS = 'srevia_store_orders';
-const REST_OBJECT_URL = 'https://api.restful-api.dev/objects/ff808181a061cdc401a0662043e00e03';
+const RENDER_BACKEND_STATUS_URL = 'https://sreviia-backend.onrender.com/api/products/status';
 
 const StoreContext = createContext<StoreContextType>({
   product: DEFAULT_PRODUCT,
@@ -108,27 +108,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, []);
 
-  // 2. Global Persistent Storage Polling (Guarantees synchronization across all devices every 3 seconds)
+  // 2. Global Persistent Storage Polling via /api/product
   useEffect(() => {
     const fetchLatestProduct = () => {
-      fetch(REST_OBJECT_URL)
+      fetch('/api/product')
         .then((res) => (res.ok ? res.json() : null))
         .then((json) => {
-          if (json && json.data) {
+          if (json && json.success && json.product) {
+            const p = json.product;
             setProduct((prev) => ({
               ...prev,
-              stockQuantity: json.data.inStock ? (json.data.stockQuantity || 100) : 0,
-              active: json.data.inStock !== false,
-              price: typeof json.data.price === 'number' ? json.data.price : prev.price,
-              originalPrice: typeof json.data.originalPrice === 'number' ? json.data.originalPrice : prev.originalPrice,
+              stockQuantity: p.inStock ? (p.stockQuantity || 100) : 0,
+              active: p.inStock !== false,
+              price: typeof p.price === 'number' ? p.price : prev.price,
+              originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
             }));
           }
         })
-        .catch((e) => console.warn("Polling REST notice:", e));
+        .catch((e) => console.warn("Polling /api/product notice:", e));
     };
 
     fetchLatestProduct();
-    const interval = setInterval(fetchLatestProduct, 3000);
+    const interval = setInterval(fetchLatestProduct, 2500);
     return () => clearInterval(interval);
   }, []);
 
@@ -165,28 +166,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
-    // A. Sync to Global REST Database (Guaranteed 100% Persistence across all devices)
-    try {
-      await fetch(REST_OBJECT_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'Srevia Product Stock',
-          data: payload,
-        }),
-      });
-    } catch (e) {
-      console.warn("REST PUT notice:", e);
-    }
-
-    // B. Sync to Firebase Firestore
-    try {
-      await setDoc(doc(db, 'store', 'product'), payload);
-    } catch (e) {
-      console.warn("Firestore setDoc notice:", e);
-    }
-
-    // C. Sync to Vercel Serverless /api/product
+    // A. Sync to Vercel Serverless /api/product (Same-origin & CORS safe)
     try {
       await fetch('/api/product', {
         method: 'POST',
@@ -195,6 +175,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
     } catch (e) {
       console.warn("/api/product POST notice:", e);
+    }
+
+    // B. Sync to Render Backend MongoDB Endpoint
+    try {
+      await fetch(RENDER_BACKEND_STATUS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inStock: stockAvailable,
+          price: p,
+        }),
+      });
+    } catch (e) {
+      console.warn("Render backend status POST notice:", e);
+    }
+
+    // C. Sync to Firebase Firestore
+    try {
+      await setDoc(doc(db, 'store', 'product'), payload);
+    } catch (e) {
+      console.warn("Firestore setDoc notice:", e);
     }
   };
 

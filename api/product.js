@@ -1,4 +1,4 @@
-const REST_OBJECT_URL = 'https://api.restful-api.dev/objects/ff808181a061cdc401a0662043e00e03';
+const BACKEND_URL = 'https://sreviia-backend.onrender.com/api/products';
 
 let memoryState = {
   inStock: true,
@@ -35,18 +35,19 @@ export default async function handler(req, res) {
       }
       memoryState.updatedAt = new Date().toISOString();
 
-      // Persist to REST storage
+      // Sync to Render Backend MongoDB
       try {
-        await fetch(REST_OBJECT_URL, {
-          method: 'PUT',
+        await fetch(`${BACKEND_URL}/status`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: 'Srevia Product Stock',
-            data: memoryState
+            inStock: memoryState.inStock,
+            price: memoryState.price,
+            originalPrice: memoryState.originalPrice
           })
         });
       } catch (err) {
-        console.warn('Restful-api PUT error:', err);
+        console.warn('Backend sync notice:', err);
       }
 
       return res.status(200).json({ success: true, product: memoryState });
@@ -55,23 +56,20 @@ export default async function handler(req, res) {
     }
   }
 
-  // GET Request: Fetch persistent data
+  // GET Request: Fetch from Render Backend
   try {
-    const remoteRes = await fetch(REST_OBJECT_URL);
-    if (remoteRes.ok) {
-      const json = await remoteRes.json();
-      if (json && json.data) {
-        memoryState = {
-          inStock: typeof json.data.inStock === 'boolean' ? json.data.inStock : memoryState.inStock,
-          price: typeof json.data.price === 'number' ? json.data.price : memoryState.price,
-          originalPrice: typeof json.data.originalPrice === 'number' ? json.data.originalPrice : memoryState.originalPrice,
-          stockQuantity: typeof json.data.stockQuantity === 'number' ? json.data.stockQuantity : (json.data.inStock ? 100 : 0),
-          updatedAt: json.updatedAt || new Date().toISOString()
-        };
+    const backendRes = await fetch(BACKEND_URL);
+    if (backendRes.ok) {
+      const products = await backendRes.json();
+      if (Array.isArray(products) && products.length > 0) {
+        const p = products[0];
+        memoryState.inStock = p.active !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
+        memoryState.stockQuantity = p.stockQuantity !== undefined ? p.stockQuantity : (p.active ? 100 : 0);
+        memoryState.price = typeof p.price === 'number' ? p.price : memoryState.price;
       }
     }
   } catch (err) {
-    console.warn('Restful-api GET error:', err);
+    console.warn('Backend fetch notice:', err);
   }
 
   return res.status(200).json({ success: true, product: memoryState });
