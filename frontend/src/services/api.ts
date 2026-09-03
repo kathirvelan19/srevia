@@ -161,6 +161,23 @@ export const api = {
     }
   },
 
+  verifyRazorpayPayment: async (payload: { razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string; orderId?: string }): Promise<any> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/razorpay/verify-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+      return null;
+    } catch (e) {
+      console.warn('Razorpay verification error:', e);
+      return null;
+    }
+  },
+
   // Track Order
   trackOrder: async (orderId: string, phone: string): Promise<Order | null> => {
     try {

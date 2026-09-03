@@ -18,7 +18,7 @@ import { useStore } from '../../context/StoreContext';
 
 export const CheckoutPage: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, clearCart, subtotal, deliveryCharge, totalAmount } = useCart();
-  const { inStock } = useStore();
+  const { inStock, price } = useStore();
   const navigate = useNavigate();
 
   // Active step
@@ -97,97 +97,121 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
+  // Helper to dynamically load Razorpay script
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   // Razorpay Gateway Trigger
   const handleRazorpayPayment = async () => {
+    if (!inStock) return;
     setSubmitting(true);
     setSubmitError(null);
 
-    // Call backend to create Razorpay Order
-    const razorpayOrder = await api.createRazorpayOrder(totalAmount);
+    const scriptLoaded = await loadRazorpayScript();
+    if (!scriptLoaded) {
+      setSubmitError('Razorpay Payment Gateway failed to load. Please check your internet connection or use manual UPI payment.');
+      setSubmitting(false);
+      return;
+    }
 
-    const options: any = {
-      key: razorpayOrder?.key || 'rzp_test_TVd0Zt7Us9I1Bs',
-      amount: totalAmount * 100,
-      currency: 'INR',
-      name: 'SREVIA HERBS',
-      description: 'PUREWHITE Herbal Anti-Pimple Soap Order',
-      image: '/assets/purewhite_soap_bar.jpg',
-      order_id: razorpayOrder?.razorpayOrderId || undefined,
-      config: {
-        display: {
-          blocks: {
-            upi: {
-              name: 'Pay via UPI / Google Pay / QR Code',
-              instruments: [
-                {
-                  method: 'upi'
-                }
-              ]
-            }
-          },
-          sequence: ['block.upi'],
-          preferences: {
-            show_default_blocks: true
+    try {
+      // Call backend to create Razorpay Order
+      const razorpayOrder = await api.createRazorpayOrder(totalAmount);
+
+      const options: any = {
+        key: razorpayOrder?.key || 'rzp_test_TVd0Zt7Us9I1Bs',
+        amount: Math.round(totalAmount * 100),
+        currency: 'INR',
+        name: 'SREVIA HERBS',
+        description: 'PUREWHITE Herbal Anti-Pimple Soap Order',
+        order_id: razorpayOrder?.razorpayOrderId || undefined,
+        handler: async function (response: any) {
+          setSubmitting(true);
+          const orderData = {
+            customer,
+            items: cart.length > 0 ? cart.map(i => ({
+              productId: i.product.id,
+              productName: i.product.name,
+              quantity: i.quantity,
+              unitPrice: i.product.price,
+              totalPrice: i.quantity * i.product.price
+            })) : [{
+              productId: DEFAULT_PRODUCT.id,
+              productName: DEFAULT_PRODUCT.name,
+              quantity: 1,
+              unitPrice: price,
+              totalPrice: price
+            }],
+            subtotal,
+            deliveryCharge,
+            totalAmount,
+            payment: {
+              method: 'RAZORPAY',
+              status: 'VERIFIED',
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id
+            },
+            orderStatus: 'ORDER_RECEIVED'
+          };
+
+          // Verify signature on backend if available
+          try {
+            await api.verifyRazorpayPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature
+            });
+          } catch (e) {
+            console.warn("Payment verification notice:", e);
+          }
+
+          const res = await api.createOrder(orderData as any);
+          setSubmitting(false);
+
+          if (res.success && res.order) {
+            clearCart();
+            sessionStorage.setItem('last_placed_order', JSON.stringify(res.order));
+            navigate('/order-success');
+          } else {
+            setSubmitError(res.message || 'Payment completed but order creation failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: customer.name || 'Kathirvelan',
+          email: customer.email || 'kathirvelankvr@gmail.com',
+          contact: customer.phone || '9025132739'
+        },
+        theme: {
+          color: '#1F3D2E'
+        },
+        modal: {
+          ondismiss: function () {
+            setSubmitting(false);
           }
         }
-      },
-      handler: async function (response: any) {
-        // Build multipart order request
-        const orderData = {
-          customer,
-          items: cart.length > 0 ? cart.map(i => ({
-            productId: i.product.id,
-            productName: i.product.name,
-            quantity: i.quantity,
-            unitPrice: i.product.price,
-            totalPrice: i.quantity * i.product.price
-          })) : [{
-            productId: DEFAULT_PRODUCT.id,
-            productName: DEFAULT_PRODUCT.name,
-            quantity: 1,
-            unitPrice: 149,
-            totalPrice: 149
-          }],
-          subtotal,
-          deliveryCharge,
-          totalAmount,
-          payment: {
-            method: 'RAZORPAY',
-            status: 'VERIFIED',
-            razorpayPaymentId: response.razorpay_payment_id,
-            razorpayOrderId: response.razorpay_order_id
-          },
-          orderStatus: 'CONFIRMED'
-        };
+      };
 
-        const res = await api.createOrder(orderData as any);
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (resp: any) {
+        setSubmitError(`Payment Failed: ${resp.error?.description || 'Transaction cancelled or declined.'}`);
         setSubmitting(false);
-
-        if (res.success && res.order) {
-          clearCart();
-          sessionStorage.setItem('last_placed_order', JSON.stringify(res.order));
-          navigate('/order-success');
-        } else {
-          setSubmitError(res.message || 'Payment completed but order creation failed. Please contact support.');
-        }
-      },
-      prefill: {
-        name: customer.name || 'Kathirvelan',
-        email: customer.email || 'kathirvelankvr@gmail.com',
-        contact: customer.phone || '9025132739'
-      },
-      theme: {
-        color: '#1F3D2E'
-      }
-    };
-
-    if (window.Razorpay) {
-      const rzp1 = new window.Razorpay(options);
-      rzp1.open();
-    } else {
-      // Fallback for dev mode if script blocked by browser extension
-      alert('Razorpay Checkout SDK simulated for testing.');
-      options.handler({ razorpay_payment_id: 'pay_mock_' + Date.now(), razorpay_order_id: 'order_mock_' + Date.now() });
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error('Razorpay initiation error:', err);
+      setSubmitError('Razorpay payment error: ' + (err.message || 'Could not initiate checkout.'));
+      setSubmitting(false);
     }
   };
 
