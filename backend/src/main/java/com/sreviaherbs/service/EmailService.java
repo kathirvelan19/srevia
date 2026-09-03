@@ -91,7 +91,7 @@ public class EmailService {
         placeholders.put("CUSTOMER_NAME", message.getName() != null && !message.getName().trim().isEmpty() ? message.getName().trim() : "Valued Customer");
         placeholders.put("CUSTOMER_EMAIL", message.getEmail().trim());
         placeholders.put("SUBJECT", message.getSubject() != null && !message.getSubject().trim().isEmpty() ? message.getSubject().trim() : "Product Enquiry");
-        placeholders.put("MESSAGE", message.getMessage() != null ? message.getMessage().trim() : "");
+        placeholders.put("MESSAGE", message.getMessage() != null ? message.getMessage().trim().replace("\n", "<br/>") : "");
         placeholders.put("MESSAGE_ID", message.getId() != null ? message.getId() : "MSG-" + System.currentTimeMillis());
         placeholders.put("WEBSITE_URL", websiteUrl);
         placeholders.put("CONTACT_URL", websiteUrl + "/contact");

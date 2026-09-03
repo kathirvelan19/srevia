@@ -1,68 +1,302 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Message Received — SREVIA HERBS</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #FCFBF7; margin: 0; padding: 0; color: #242824; }
-        .container { max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #F4F0E7; }
-        .header { bg-color: #1F3D2E; background: #1F3D2E; padding: 40px 30px; text-align: center; color: #FCFBF7; }
-        .brand-title { font-size: 24px; font-weight: 800; letter-spacing: 3px; margin: 0; color: #FCFBF7; text-transform: uppercase; }
-        .brand-subtitle { font-size: 11px; letter-spacing: 2px; color: #B89B5E; margin-top: 5px; text-transform: uppercase; font-weight: 600; }
-        .content { padding: 40px 35px; }
-        .icon-circle { width: 50px; height: 50px; background-color: #F4F0E7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #1F3D2E; font-size: 24px; font-weight: bold; line-height: 50px; text-align: center; }
-        .title { font-size: 22px; font-weight: 700; color: #1F3D2E; text-align: center; margin: 0 0 10px; }
-        .subtitle { font-size: 14px; text-align: center; color: #B89B5E; margin: 0 0 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .text { font-size: 14px; line-height: 1.6; color: #4A5568; margin-bottom: 20px; }
-        .card { background-color: #FCFBF7; border: 1px solid #A8B9A3; border-radius: 12px; padding: 25px; margin: 25px 0; }
-        .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #B89B5E; font-weight: 700; margin-bottom: 5px; }
-        .value { font-size: 15px; color: #1F3D2E; font-weight: 600; margin-bottom: 15px; }
-        .message-box { font-size: 14px; color: #242824; line-height: 1.6; background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #E2E8F0; }
-        .ref-tag { font-family: monospace; background: #1F3D2E; color: #B89B5E; padding: 4px 10px; border-radius: 6px; font-size: 13px; display: inline-block; font-weight: bold; }
-        .button-wrap { text-align: center; margin: 35px 0 15px; }
-        .button { display: inline-block; background-color: #1F3D2E; color: #FCFBF7 !important; text-decoration: none; padding: 15px 35px; border-radius: 50px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-        .footer { background-color: #F4F0E7; padding: 25px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #E2E8F0; }
-        .footer a { color: #1F3D2E; text-decoration: none; font-weight: 600; }
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f4f1e9;
+        font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+        color: #193d2d;
+      }
+      table {
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      .wrapper {
+        width: 100%;
+        padding: 40px 15px;
+        background: #f4f1e9;
+      }
+      .container {
+        width: 100%;
+        max-width: 640px;
+        margin: auto;
+        background: #fffdf8;
+        border: 1px solid #e4dfd4;
+        border-radius: 24px;
+        overflow: hidden;
+      }
+      .header {
+        padding: 32px 42px;
+        border-bottom: 1px solid #ebe6dc;
+      }
+      .brand {
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #193d2d;
+      }
+      .tagline {
+        margin-top: 5px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #b08a46;
+      }
+      .hero {
+        padding: 48px 42px 35px;
+        text-align: center;
+      }
+      .icon {
+        width: 62px;
+        height: 62px;
+        line-height: 62px;
+        margin: auto;
+        border-radius: 50%;
+        background: #e8efe9;
+        color: #193d2d;
+        font-size: 26px;
+        font-weight: bold;
+      }
+      .eyebrow {
+        margin-top: 22px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #b08a46;
+        text-transform: uppercase;
+      }
+      .title {
+        margin: 10px 0 12px;
+        font-size: 34px;
+        line-height: 1.15;
+        font-weight: 800;
+        color: #193d2d;
+      }
+      .description {
+        max-width: 470px;
+        margin: auto;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #70766f;
+      }
+      .message-box {
+        margin: 0 42px;
+        padding: 25px;
+        background: #f7f4ed;
+        border: 1px solid #e7e1d6;
+        border-radius: 18px;
+      }
+      .section-title {
+        margin-bottom: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #777c75;
+      }
+      .label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #888c85;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+      }
+      .value {
+        margin-top: 5px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #193d2d;
+      }
+      .message-content {
+        margin-top: 7px;
+        padding: 16px;
+        background: #fffdf8;
+        border: 1px solid #e4dfd4;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.7;
+        color: #626a63;
+      }
+      .divider {
+        height: 1px;
+        margin: 20px 0;
+        background: #e6e1d7;
+      }
+      .response-box {
+        margin: 30px 42px;
+        padding: 25px;
+        text-align: center;
+        background: #edf2ec;
+        border-radius: 18px;
+      }
+      .response-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #193d2d;
+      }
+      .response-text {
+        margin: 8px auto 0;
+        max-width: 450px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: #6e776f;
+      }
+      .cta {
+        padding: 5px 42px 35px;
+        text-align: center;
+      }
+      .button {
+        display: inline-block;
+        padding: 15px 30px;
+        border-radius: 999px;
+        background: #193d2d;
+        color: #ffffff !important;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+      .footer {
+        padding: 34px 42px;
+        text-align: center;
+        background: #193d2d;
+      }
+      .footer-brand {
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #fffdf8;
+      }
+      .footer-tagline {
+        margin-top: 6px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #c7a668;
+      }
+      .footer-line {
+        width: 45px;
+        height: 1px;
+        margin: 18px auto;
+        background: #c7a668;
+      }
+      .footer-text {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.7;
+        color: #bdc7bf;
+      }
+      .footer-links {
+        margin-top: 18px;
+        font-size: 11px;
+      }
+      .footer-links a {
+        color: #fffdf8;
+        text-decoration: none;
+      }
+      @media screen and (max-width: 600px) {
+        .wrapper { padding: 12px 6px; }
+        .header { padding: 26px 22px; }
+        .hero { padding: 38px 22px 28px; }
+        .title { font-size: 28px; }
+        .message-box, .response-box { margin-left: 18px; margin-right: 18px; }
+        .cta { padding-left: 22px; padding-right: 22px; }
+        .footer { padding-left: 22px; padding-right: 22px; }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="brand-title">SREVIA HERBS</div>
-            <div class="brand-subtitle">AYURVEDIC SKINCARE</div>
-        </div>
+  </head>
+  <body>
+    <table role="presentation" width="100%" class="wrapper">
+      <tr>
+        <td align="center">
+          <table role="presentation" class="container">
+            <!-- HEADER -->
+            <tr>
+              <td class="header">
+                <div class="brand">SREVIA HERBS</div>
+                <div class="tagline">AYURVEDIC SKINCARE</div>
+              </td>
+            </tr>
 
-        <div class="content">
-            <div class="icon-circle">✓</div>
-            <div class="title">MESSAGE RECEIVED</div>
-            <div class="subtitle">We've Heard From You</div>
+            <!-- HERO -->
+            <tr>
+              <td class="hero">
+                <div class="icon">✓</div>
+                <div class="eyebrow">Message Received</div>
+                <div class="title">We've Heard From You</div>
+                <p class="description">
+                  Hi {{CUSTOMER_NAME}}, thank you for reaching out to SREVIA HERBS. Your message has been received successfully.
+                </p>
+              </td>
+            </tr>
 
-            <p class="text">Hi <strong>{{CUSTOMER_NAME}}</strong>,</p>
-            <p class="text">Thank you for reaching out to <strong>SREVIA HERBS</strong>. Your message has been received successfully and logged with our customer care team.</p>
+            <!-- MESSAGE -->
+            <tr>
+              <td>
+                <div class="message-box">
+                  <div class="section-title">Your Message</div>
 
-            <div class="card">
-                <div class="label">Reference ID</div>
-                <div class="value"><span class="ref-tag">{{MESSAGE_ID}}</span></div>
+                  <div class="label">Subject</div>
+                  <div class="value">{{SUBJECT}}</div>
 
-                <div class="label">Subject</div>
-                <div class="value">{{SUBJECT}}</div>
+                  <div class="divider"></div>
 
-                <div class="label">Your Message</div>
-                <div class="message-box">{{MESSAGE}}</div>
-            </div>
+                  <div class="label">Message</div>
+                  <div class="message-content">{{MESSAGE}}</div>
 
-            <p class="text">Our herbal skincare team will review your inquiry and get back to you as soon as possible via email at <strong>{{CUSTOMER_EMAIL}}</strong>.</p>
+                  <div class="divider"></div>
 
-            <div class="button-wrap">
-                <a href="{{WEBSITE_URL}}" class="button">VISIT SREVIA HERBS</a>
-            </div>
-        </div>
+                  <div class="label">Reference ID</div>
+                  <div class="value">{{MESSAGE_ID}}</div>
+                </div>
+              </td>
+            </tr>
 
-        <div class="footer">
-            &copy; SREVIA HERBS. Pure Skin. Pure Care. PureWhite.<br>
-            <a href="{{WEBSITE_URL}}">sreviaherbs.com</a> • <a href="{{CONTACT_URL}}">Contact Support</a>
-        </div>
-    </div>
-</body>
+            <!-- RESPONSE -->
+            <tr>
+              <td>
+                <div class="response-box">
+                  <div class="response-title">We'll Be In Touch 🌿</div>
+                  <p class="response-text">
+                    Our team has received your message and will get back to you as soon as possible via <strong>{{CUSTOMER_EMAIL}}</strong>. We appreciate you taking the time to connect with SREVIA HERBS.
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- CTA -->
+            <tr>
+              <td class="cta">
+                <a href="{{WEBSITE_URL}}" class="button" target="_blank"> VISIT SREVIA HERBS &nbsp; → </a>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td class="footer">
+                <div class="footer-brand">SREVIA HERBS</div>
+                <div class="footer-tagline">AYURVEDIC SKINCARE</div>
+                <div class="footer-line"></div>
+                <p class="footer-text">
+                  Pure Skin. Pure Care. PureWhite.
+                  <br />
+                  Crafted with care in small batches.
+                </p>
+                <div class="footer-links">
+                  <a href="{{WEBSITE_URL}}"> Website </a>
+                  &nbsp;&nbsp; • &nbsp;&nbsp;
+                  <a href="{{CONTACT_URL}}"> Contact </a>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
