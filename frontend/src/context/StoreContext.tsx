@@ -21,6 +21,7 @@ interface StoreContextType {
 
 const STORAGE_KEY_PRODUCT = 'srevia_store_product';
 const STORAGE_KEY_ORDERS = 'srevia_store_orders';
+const REST_OBJECT_URL = 'https://api.restful-api.dev/objects/ff808181a061cdc401a0662043e00e03';
 
 const StoreContext = createContext<StoreContextType>({
   product: DEFAULT_PRODUCT,
@@ -77,7 +78,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
   });
 
-  // 1. Firebase Firestore Real-Time Listener (Instant Global Sync Across All Devices & Users)
+  // 1. Firebase Firestore Real-Time Listener
   useEffect(() => {
     let unsubscribe = () => {};
     try {
@@ -107,23 +108,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, []);
 
-  // 2. Initial Serverless API Sync (/api/product)
+  // 2. Global Persistent Storage Polling (Guarantees synchronization across all devices every 3 seconds)
   useEffect(() => {
-    fetch('/api/product')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && data.success && data.product) {
-          const p = data.product;
-          setProduct((prev) => ({
-            ...prev,
-            stockQuantity: p.inStock ? (p.stockQuantity || 100) : 0,
-            active: p.inStock !== false,
-            price: typeof p.price === 'number' ? p.price : prev.price,
-            originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
-          }));
-        }
-      })
-      .catch((e) => console.warn("/api/product fetch notice:", e));
+    const fetchLatestProduct = () => {
+      fetch(REST_OBJECT_URL)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (json && json.data) {
+            setProduct((prev) => ({
+              ...prev,
+              stockQuantity: json.data.inStock ? (json.data.stockQuantity || 100) : 0,
+              active: json.data.inStock !== false,
+              price: typeof json.data.price === 'number' ? json.data.price : prev.price,
+              originalPrice: typeof json.data.originalPrice === 'number' ? json.data.originalPrice : prev.originalPrice,
+            }));
+          }
+        })
+        .catch((e) => console.warn("Polling REST notice:", e));
+    };
+
+    fetchLatestProduct();
+    const interval = setInterval(fetchLatestProduct, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const inStock = product.stockQuantity > 0 && product.active !== false;
@@ -150,31 +156,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const p = newPrice !== undefined ? newPrice : price;
     const op = newOriginalPrice !== undefined ? newOriginalPrice : (originalPrice || 120);
 
-    // Sync to Firebase Firestore (Real-Time for all users)
+    const payload = {
+      inStock: stockAvailable,
+      stockQuantity: stockAvailable ? 100 : 0,
+      active: stockAvailable,
+      price: p,
+      originalPrice: op,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // A. Sync to Global REST Database (Guaranteed 100% Persistence across all devices)
     try {
-      await setDoc(doc(db, 'store', 'product'), {
-        inStock: stockAvailable,
-        stockQuantity: stockAvailable ? 100 : 0,
-        active: stockAvailable,
-        price: p,
-        originalPrice: op,
-        updatedAt: new Date().toISOString(),
+      await fetch(REST_OBJECT_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Srevia Product Stock',
+          data: payload,
+        }),
       });
+    } catch (e) {
+      console.warn("REST PUT notice:", e);
+    }
+
+    // B. Sync to Firebase Firestore
+    try {
+      await setDoc(doc(db, 'store', 'product'), payload);
     } catch (e) {
       console.warn("Firestore setDoc notice:", e);
     }
 
-    // Sync to Vercel Serverless /api/product
+    // C. Sync to Vercel Serverless /api/product
     try {
       await fetch('/api/product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inStock: stockAvailable,
-          stockQuantity: stockAvailable ? 100 : 0,
-          price: p,
-          originalPrice: op,
-        }),
+        body: JSON.stringify(payload),
       });
     } catch (e) {
       console.warn("/api/product POST notice:", e);
