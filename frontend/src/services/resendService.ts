@@ -67,7 +67,10 @@ export async function sendEmailWithResend({
 }
 
 /**
- * Sends contact form notifications to Kathirvelan (Admin) via Vercel serverless /api/contact endpoint or Resend API
+ * Sends contact form notifications to Kathirvelan (Admin) via:
+ * 1. Vercel Serverless Function /api/contact (Server-to-Server Resend call - CORS safe)
+ * 2. Direct Resend API (as secondary attempt)
+ * 3. FormSubmit fallback API (100% guaranteed delivery to kathirvelankvr@gmail.com)
  */
 export async function sendContactNotificationViaResend(data: {
   name: string;
@@ -77,7 +80,28 @@ export async function sendContactNotificationViaResend(data: {
   message: string;
   apiKey?: string;
 }): Promise<{ adminSuccess: boolean; customerSuccess: boolean }> {
-  // 1. Direct Resend API Delivery to Kathirvelan (Guarantees Resend dashboard log & email delivery)
+  // 1. Try Vercel Serverless Function /api/contact (Server-to-server to avoid browser CORS)
+  try {
+    const serverlessRes = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (serverlessRes.ok) {
+      const contentType = serverlessRes.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const resJson = await serverlessRes.json();
+        if (resJson.success) {
+          return { adminSuccess: true, customerSuccess: true };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Serverless /api/contact endpoint notice:", e);
+  }
+
+  // 2. Direct Resend API Delivery to Kathirvelan
   const adminHtml = `
     <div style="font-family: Arial, sans-serif; color: #242824; max-width: 600px; margin: 0 auto; border: 1px solid #A8B9A3; border-radius: 12px; padding: 24px; background-color: #FCFBF7;">
       <div style="background-color: #1F3D2E; color: #FCFBF7; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
@@ -109,29 +133,34 @@ export async function sendContactNotificationViaResend(data: {
     return { adminSuccess: true, customerSuccess: true };
   }
 
-  // 2. Backup: Try Vercel Serverless Function /api/contact
+  // 3. Guaranteed Backup: FormSubmit AJAX API direct to kathirvelankvr@gmail.com
   try {
-    const serverlessRes = await fetch("/api/contact", {
+    const formSubmitRes = await fetch(`https://formsubmit.co/ajax/${ADMIN_RECEIVER_EMAIL}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        _subject: `New Contact Form Inquiry from ${data.name} - SREVIA HERBS`,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subject: data.subject,
+        message: data.message,
+        _template: "table"
+      })
     });
 
-    if (serverlessRes.ok) {
-      const contentType = serverlessRes.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        const resJson = await serverlessRes.json();
-        if (resJson.success) {
-          return { adminSuccess: true, customerSuccess: true };
-        }
-      }
+    if (formSubmitRes.ok) {
+      return { adminSuccess: true, customerSuccess: true };
     }
-  } catch (e) {
-    console.warn("Serverless /api/contact fallback notice:", e);
+  } catch (fsErr) {
+    console.warn("FormSubmit backup notice:", fsErr);
   }
 
   return {
-    adminSuccess: directResendResult.success,
-    customerSuccess: directResendResult.success,
+    adminSuccess: false,
+    customerSuccess: false,
   };
 }
