@@ -310,56 +310,56 @@ export const CheckoutPage: React.FC = () => {
         )}
 
         {/* Checkout Steps Progress Bar */}
-        <div className="max-w-3xl mx-auto mb-12">
+        <div className="max-w-3xl mx-auto mb-8 sm:mb-12 px-2">
           <div className="flex items-center justify-between relative">
-            <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-[#F4F0E7] -z-10" />
+            <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-[#F4F0E7] -z-10" />
             
             <div
               onClick={() => setStep(1)}
-              className={`flex flex-col items-center gap-2 cursor-pointer ${
+              className={`flex flex-col items-center gap-1.5 cursor-pointer ${
                 step >= 1 ? 'text-[#1F3D2E]' : 'text-[#242824]/40'
               }`}
             >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs ${
                 step >= 1 ? 'bg-[#1F3D2E] text-white shadow-sm' : 'bg-[#F4F0E7] text-[#242824]/60'
               }`}>
                 1
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider">Order Summary</span>
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-center">Summary</span>
             </div>
 
             <div
               onClick={() => step >= 2 && setStep(2)}
-              className={`flex flex-col items-center gap-2 ${step >= 2 ? 'cursor-pointer text-[#1F3D2E]' : 'text-[#242824]/40'}`}
+              className={`flex flex-col items-center gap-1.5 ${step >= 2 ? 'cursor-pointer text-[#1F3D2E]' : 'text-[#242824]/40'}`}
             >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs ${
                 step >= 2 ? 'bg-[#1F3D2E] text-white shadow-sm' : 'bg-[#F4F0E7] text-[#242824]/60'
               }`}>
                 2
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider">Customer Details</span>
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-center">Address</span>
             </div>
 
-            <div className={`flex flex-col items-center gap-2 ${step >= 3 ? 'text-[#1F3D2E]' : 'text-[#242824]/40'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+            <div className={`flex flex-col items-center gap-1.5 ${step >= 3 ? 'text-[#1F3D2E]' : 'text-[#242824]/40'}`}>
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs ${
                 step === 3 ? 'bg-[#1F3D2E] text-white shadow-sm' : 'bg-[#F4F0E7] text-[#242824]/60'
               }`}>
                 3
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider">Payment</span>
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-center">Payment</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-start">
           
           {/* Main Checkout Step Panel */}
-          <div className="lg:col-span-7 bg-[#FCFBF7] p-6 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 shadow-herbal">
+          <div className="lg:col-span-7 bg-[#FCFBF7] p-5 sm:p-10 rounded-3xl border border-[#A8B9A3]/30 shadow-herbal">
             
             {/* STEP 1: ORDER ITEMS REVIEW */}
             {step === 1 && (
               <div className="space-y-6 animate-fade-in">
-                <h2 className="font-serif-display text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
+                <h2 className="font-serif-display text-xl sm:text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
                   Step 1: Your Order Items
                 </h2>
 
@@ -367,9 +367,9 @@ export const CheckoutPage: React.FC = () => {
                   {activeItems.map((item) => (
                     <div
                       key={item.product.id}
-                      className="flex items-center justify-between p-4 bg-[#F4F0E7]/50 rounded-2xl border border-[#A8B9A3]/20"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#F4F0E7]/50 rounded-2xl border border-[#A8B9A3]/20 gap-4"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <img
                           src={getProductImageSrc(item.product.image)}
                           alt={item.product.name}
@@ -378,41 +378,43 @@ export const CheckoutPage: React.FC = () => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = purewhiteSoapImg;
                           }}
-                          className="w-16 h-16 object-cover rounded-xl border border-[#F4F0E7] shrink-0"
+                          className="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-xl border border-[#F4F0E7] shrink-0"
                         />
                         <div>
-                          <h3 className="font-serif-display font-bold text-base text-[#1F3D2E]">
+                          <h3 className="font-serif-display font-bold text-sm sm:text-base text-[#1F3D2E]">
                             {item.product.name}
                           </h3>
                           <p className="text-xs text-[#B89B5E] font-semibold">₹{item.product.price} / bar</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 bg-[#FCFBF7] px-3 py-1 rounded-full border border-[#A8B9A3]/40">
+                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-2 sm:pt-0 border-[#A8B9A3]/20">
+                        <div className="flex items-center gap-2 bg-[#FCFBF7] px-3 py-1.5 rounded-full border border-[#A8B9A3]/40">
                           <button
                             onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                            className="p-1 hover:text-[#315C45]"
+                            className="w-7 h-7 flex items-center justify-center hover:text-[#315C45]"
+                            aria-label="Decrease quantity"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <span className="font-bold text-xs text-[#1F3D2E] w-4 text-center">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                            className="p-1 hover:text-[#315C45]"
+                            className="w-7 h-7 flex items-center justify-center hover:text-[#315C45]"
+                            aria-label="Increase quantity"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <span className="font-bold text-sm text-[#1F3D2E] w-16 text-right">
+                        <span className="font-bold text-sm text-[#1F3D2E]">
                           ₹{item.product.price * item.quantity}
                         </span>
 
                         {cart.length > 0 && (
                           <button
                             onClick={() => removeFromCart(item.product.id)}
-                            className="text-red-500 hover:text-red-700 p-1"
+                            className="text-red-500 hover:text-red-700 p-1.5"
                             title="Remove item"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -426,7 +428,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="pt-6 border-t border-[#F4F0E7] flex justify-end">
                   <button
                     onClick={() => setStep(2)}
-                    className="bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest px-8 py-4 rounded-full shadow-herbal transition-all flex items-center gap-2"
+                    className="w-full sm:w-auto bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest px-8 py-4 rounded-full shadow-herbal transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     <span>Proceed to Delivery Info</span>
                     <ArrowRight className="w-4 h-4 text-[#B89B5E]" />
@@ -438,7 +440,7 @@ export const CheckoutPage: React.FC = () => {
             {/* STEP 2: CUSTOMER INFORMATION & ADDRESS */}
             {step === 2 && (
               <div className="space-y-6 animate-fade-in">
-                <h2 className="font-serif-display text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
+                <h2 className="font-serif-display text-xl sm:text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
                   Step 2: Delivery & Contact Address
                 </h2>
 
@@ -452,7 +454,7 @@ export const CheckoutPage: React.FC = () => {
                       value={customer.name}
                       onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
                       placeholder="e.g. Arun Kumar"
-                      className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                      className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                         errors.name ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                       }`}
                     />
@@ -470,7 +472,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.phone}
                         onChange={(e) => setCustomer({ ...customer, phone: e.target.value.replace(/\D/g, '') })}
                         placeholder="10-digit mobile number"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.phone ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -486,7 +488,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.email}
                         onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
                         placeholder="your@email.com"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.email ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -504,7 +506,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.address.house}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, house: e.target.value } })}
                         placeholder="No. 12/B"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.house ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -520,7 +522,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.address.street}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, street: e.target.value } })}
                         placeholder="Green Garden Street"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.street ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -538,7 +540,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.address.city}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, city: e.target.value } })}
                         placeholder="Coimbatore"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.city ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -553,7 +555,7 @@ export const CheckoutPage: React.FC = () => {
                         type="text"
                         disabled
                         value="Tamil Nadu"
-                        className="w-full px-4 py-3 bg-gray-100 border border-[#A8B9A3]/40 rounded-xl text-sm font-semibold text-[#1F3D2E]"
+                        className="w-full px-4 py-3.5 bg-gray-100 border border-[#A8B9A3]/40 rounded-xl text-base sm:text-sm font-semibold text-[#1F3D2E]"
                       />
                     </div>
 
@@ -567,7 +569,7 @@ export const CheckoutPage: React.FC = () => {
                         value={customer.address.pincode}
                         onChange={(e) => setCustomer({ ...customer, address: { ...customer.address, pincode: e.target.value.replace(/\D/g, '') } })}
                         placeholder="6-digit pincode"
-                        className={`w-full px-4 py-3 bg-[#F4F0E7]/60 border rounded-xl text-sm focus:outline-none ${
+                        className={`w-full px-4 py-3.5 bg-[#F4F0E7]/60 border rounded-xl text-base sm:text-sm focus:outline-none ${
                           errors.pincode ? 'border-red-500' : 'border-[#A8B9A3]/40 focus:border-[#315C45]'
                         }`}
                       />
@@ -576,17 +578,17 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-[#F4F0E7] flex justify-between">
+                <div className="pt-6 border-t border-[#F4F0E7] flex flex-col sm:flex-row items-center justify-between gap-4">
                   <button
                     onClick={() => setStep(1)}
-                    className="text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] hover:underline"
+                    className="text-xs font-semibold uppercase tracking-wider text-[#1F3D2E] hover:underline py-2"
                   >
                     Back to Summary
                   </button>
 
                   <button
                     onClick={handleNextStep2}
-                    className="bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest px-8 py-4 rounded-full shadow-herbal transition-all flex items-center gap-2"
+                    className="w-full sm:w-auto bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-widest px-8 py-4 rounded-full shadow-herbal transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                   >
                     <span>Continue to Payment</span>
                     <ArrowRight className="w-4 h-4 text-[#B89B5E]" />
@@ -598,7 +600,7 @@ export const CheckoutPage: React.FC = () => {
             {/* STEP 3: PAYMENT CHOICE & PLACEMENT */}
             {step === 3 && (
               <div className="space-y-6 animate-fade-in">
-                <h2 className="font-serif-display text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
+                <h2 className="font-serif-display text-xl sm:text-2xl font-bold text-[#1F3D2E] border-b border-[#F4F0E7] pb-4">
                   Step 3: Choose Payment Option
                 </h2>
 
@@ -610,11 +612,11 @@ export const CheckoutPage: React.FC = () => {
                 )}
 
                 {/* Payment Option Tabs */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('RAZORPAY')}
-                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
+                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 active:scale-[0.98] ${
                       paymentMethod === 'RAZORPAY'
                         ? 'border-[#1F3D2E] bg-[#1F3D2E] text-white shadow-md'
                         : 'border-[#A8B9A3]/40 bg-[#F4F0E7]/60 text-[#1F3D2E]'
@@ -633,7 +635,7 @@ export const CheckoutPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('UPI_QR')}
-                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 ${
+                    className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between space-y-2 active:scale-[0.98] ${
                       paymentMethod === 'UPI_QR'
                         ? 'border-[#1F3D2E] bg-[#1F3D2E] text-white shadow-md'
                         : 'border-[#A8B9A3]/40 bg-[#F4F0E7]/60 text-[#1F3D2E]'
@@ -764,7 +766,7 @@ export const CheckoutPage: React.FC = () => {
                           value={utr}
                           onChange={(e) => setUtr(e.target.value.replace(/\D/g, ''))}
                           placeholder="e.g. 423589123456"
-                          className="w-full px-4 py-3 bg-[#FCFBF7] border border-[#A8B9A3]/40 rounded-xl text-sm font-mono tracking-wider focus:outline-none focus:border-[#315C45]"
+                          className="w-full px-4 py-3 bg-[#FCFBF7] border border-[#A8B9A3]/40 rounded-xl text-base sm:text-sm font-mono tracking-wider focus:outline-none focus:border-[#315C45]"
                         />
                       </div>
 

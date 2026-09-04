@@ -24,6 +24,17 @@ export const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Product', path: '/product' },
@@ -140,12 +151,12 @@ export const Navbar: React.FC = () => {
             {/* Cart Icon */}
             <Link
               to="/checkout"
-              className="relative p-2 text-[#1F3D2E] hover:text-[#315C45] transition-colors focus:outline-none"
+              className="relative p-2.5 text-[#1F3D2E] hover:text-[#315C45] transition-colors focus:outline-none min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Shopping Cart"
             >
               <ShoppingBag className="w-6 h-6" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#315C45] text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+                <span className="absolute top-0 right-0 bg-[#315C45] text-white text-[11px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce">
                   {totalItems}
                 </span>
               )}
@@ -154,10 +165,10 @@ export const Navbar: React.FC = () => {
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-[#1F3D2E] focus:outline-none"
+              className="md:hidden p-2 text-[#1F3D2E] focus:outline-none min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-95 transition-transform"
               aria-label="Toggle Navigation Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-[#1F3D2E]" /> : <Menu className="w-6 h-6 text-[#1F3D2E]" />}
             </button>
 
           </div>
@@ -166,30 +177,33 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[65px] bg-[#FCFBF7] z-40 px-6 py-8 border-t border-[#F4F0E7] flex flex-col justify-between overflow-y-auto animate-fade-in">
-          <div className="flex flex-col gap-6">
+        <div className="md:hidden fixed inset-0 top-[60px] bg-[#FCFBF7]/98 backdrop-blur-xl z-40 px-6 py-8 border-t border-[#F4F0E7] flex flex-col justify-between overflow-y-auto animate-fade-in shadow-2xl">
+          <div className="flex flex-col gap-5 pt-2">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`text-xl font-bold ${
+                className={`text-xl font-bold py-2 border-b border-[#F4F0E7]/60 flex items-center justify-between transition-colors ${
                   isActive(link.path)
-                    ? 'text-[#1F3D2E]'
-                    : 'text-[#242824]/70 hover:text-[#1F3D2E]'
+                    ? 'text-[#1F3D2E] font-extrabold'
+                    : 'text-[#242824]/75 hover:text-[#1F3D2E]'
                 }`}
               >
-                {link.name}
+                <span>{link.name}</span>
+                {isActive(link.path) && (
+                  <span className="w-2 h-2 rounded-full bg-[#B89B5E]" />
+                )}
               </Link>
             ))}
           </div>
 
-          <div className="pt-8 border-t border-[#F4F0E7] space-y-4">
+          <div className="pt-8 border-t border-[#F4F0E7] space-y-3.5 pb-6">
             {currentUser ? (
               <Link
                 to={isAdmin ? '/admin/dashboard' : '/profile'}
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-[#315C45] text-white rounded-xl font-bold text-sm"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#315C45] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-transform"
               >
                 <UserIcon className="w-4 h-4 text-[#B89B5E]" />
                 {isAdmin ? 'Admin Dashboard (Kathirvelan)' : 'My Profile'}
@@ -206,7 +220,7 @@ export const Navbar: React.FC = () => {
                     console.error(e);
                   }
                 }}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-[#1F3D2E] text-white rounded-xl font-bold text-sm"
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#1F3D2E] text-white rounded-xl font-bold text-sm shadow-sm active:scale-[0.98] transition-transform"
               >
                 Sign In with Google
               </button>
@@ -215,7 +229,7 @@ export const Navbar: React.FC = () => {
             <Link
               to="/track-order"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-[#F4F0E7] text-[#1F3D2E] rounded-xl font-medium text-sm border border-[#A8B9A3]/40"
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#F4F0E7] text-[#1F3D2E] rounded-xl font-medium text-sm border border-[#A8B9A3]/40 active:scale-[0.98] transition-transform"
             >
               <ShieldCheck className="w-4 h-4 text-[#B89B5E]" />
               Track Your Order

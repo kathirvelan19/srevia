@@ -132,18 +132,19 @@ export const ProductShowcaseSection: React.FC = () => {
             </p>
 
             {/* Quantity Selector */}
-            <div className="bg-[#F4F0E7]/60 p-5 rounded-2xl border border-[#A8B9A3]/30 space-y-4">
+            <div className="bg-[#F4F0E7]/60 p-4 sm:p-5 rounded-2xl border border-[#A8B9A3]/30 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#1F3D2E]">
                   Quantity
                 </span>
-                <div className="flex items-center gap-3 bg-[#FCFBF7] px-4 py-1.5 rounded-full border border-[#A8B9A3]/40">
+                <div className="flex items-center gap-2 bg-[#FCFBF7] px-3 py-1.5 rounded-full border border-[#A8B9A3]/40">
                   <button
                     disabled={!inStock}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40"
+                    className="w-8 h-8 flex items-center justify-center text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40 rounded-full hover:bg-gray-100 transition-colors"
+                    aria-label="Decrease quantity"
                   >
-                    <Minus className="w-3.5 h-3.5" />
+                    <Minus className="w-4 h-4" />
                   </button>
                   <span className="font-bold text-sm text-[#1F3D2E] w-6 text-center">
                     {quantity}
@@ -151,25 +152,26 @@ export const ProductShowcaseSection: React.FC = () => {
                   <button
                     disabled={!inStock}
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="p-1 text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40"
+                    className="w-8 h-8 flex items-center justify-center text-[#1F3D2E] hover:text-[#315C45] disabled:opacity-40 rounded-full hover:bg-gray-100 transition-colors"
+                    aria-label="Increase quantity"
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs py-2 px-4 bg-[#FCFBF7] rounded-xl border border-[#F4F0E7]">
+              <div className="flex items-center justify-between text-xs py-2.5 px-4 bg-[#FCFBF7] rounded-xl border border-[#F4F0E7]">
                 <span className="text-[#242824]/70 font-medium">Subtotal</span>
                 <span className="font-bold text-base text-[#1F3D2E]">
                   ₹{quantity * price}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <button
                   disabled={!inStock}
                   onClick={handleAddToCart}
-                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 ${
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
                     inStock
                       ? 'bg-[#F4F0E7] hover:bg-[#A8B9A3]/30 text-[#1F3D2E] border border-[#315C45]/40'
                       : 'bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed'
@@ -182,7 +184,7 @@ export const ProductShowcaseSection: React.FC = () => {
                 <button
                   disabled={!inStock}
                   onClick={handleBuyNow}
-                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-all flex items-center justify-center gap-2 ${
+                  className={`w-full font-semibold text-xs uppercase tracking-wider py-3.5 rounded-full transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${
                     inStock
                       ? 'bg-[#1F3D2E] hover:bg-[#315C45] text-white shadow-herbal'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
