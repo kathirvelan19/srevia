@@ -1,20 +1,28 @@
 package com.sreviaherbs.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.UUID;
 
-@Document(collection = "contacts")
+@Entity
+@Table(name = "contact_messages")
 public class ContactMessage {
 
     @Id
-    private String id;
+    private String id = UUID.randomUUID().toString();
+
     private String name;
     private String email;
     private String phone;
     private String subject;
+
+    @Column(columnDefinition = "TEXT")
     private String message;
+
     private Instant createdAt = Instant.now();
 
     public ContactMessage() {}

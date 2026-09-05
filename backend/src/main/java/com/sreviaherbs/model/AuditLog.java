@@ -1,24 +1,33 @@
 package com.sreviaherbs.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.UUID;
 
-@Document(collection = "audit_logs")
+@Entity
+@Table(name = "audit_logs")
 public class AuditLog {
 
     @Id
-    private String id;
+    private String id = UUID.randomUUID().toString();
+
     private String action; // PRICE_CHANGE, STOCK_TOGGLE, ORDER_STATUS_UPDATE, PAYMENT_VERIFICATION, LOGIN
     private String performedBy; // Email or Admin Username
+
+    @Column(columnDefinition = "TEXT")
     private String details;
+
     private String ipAddress;
     private Instant timestamp = Instant.now();
 
     public AuditLog() {}
 
     public AuditLog(String action, String performedBy, String details, String ipAddress) {
+        this.id = UUID.randomUUID().toString();
         this.action = action;
         this.performedBy = performedBy;
         this.details = details;

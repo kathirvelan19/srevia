@@ -1,34 +1,53 @@
 package com.sreviaherbs.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.sreviaherbs.util.JsonConverter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-@Document(collection = "orders")
+@Entity
+@Table(name = "orders")
 public class Order {
 
     @Id
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
-    @Indexed(unique = true)
+    @Column(unique = true, nullable = false)
     private String orderId;
 
     private String userId;
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.CustomerInfoConverter.class)
     private CustomerInfo customer;
-    private List<OrderItem> items;
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.OrderItemConverter.class)
+    private List<OrderItem> items = new ArrayList<>();
+
     private double subtotal;
     private double deliveryCharge;
     private double totalAmount;
 
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.PaymentInfoConverter.class)
     private OrderPaymentInfo payment;
+
     private String orderStatus;
 
     private String trackingNumber;
     private String courier;
-    private List<OrderStatusHistory> statusHistory = new java.util.ArrayList<>();
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.StatusHistoryConverter.class)
+    private List<OrderStatusHistory> statusHistory = new ArrayList<>();
 
     private boolean googleSheetsSynced = false;
 

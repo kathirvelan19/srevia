@@ -1,16 +1,19 @@
 package com.sreviaherbs.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.util.UUID;
 
-@Document(collection = "users")
+@Entity
+@Table(name = "users")
 public class User {
 
     @Id
-    private String id;
+    private String id = UUID.randomUUID().toString();
 
-    @Indexed(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
     private String password;
     private String role = "ADMIN";
@@ -18,6 +21,7 @@ public class User {
     public User() {}
 
     public User(String email, String password, String role) {
+        this.id = UUID.randomUUID().toString();
         this.email = email;
         this.password = password;
         this.role = role;

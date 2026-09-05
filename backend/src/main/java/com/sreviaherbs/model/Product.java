@@ -1,29 +1,48 @@
 package com.sreviaherbs.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
+import com.sreviaherbs.util.JsonConverter;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.util.List;
+import java.util.UUID;
 
-@Document(collection = "products")
+@Entity
+@Table(name = "products")
 public class Product {
 
     @Id
-    private String id;
+    private String id = UUID.randomUUID().toString();
+
     private String name;
     private String tagline;
     private double price;
+    private double originalPrice;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private int stockQuantity;
+
+    @Column(columnDefinition = "TEXT")
     private String image;
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.StringListConverter.class)
     private List<String> benefits;
+
+    @Column(columnDefinition = "TEXT")
+    @Convert(converter = JsonConverter.IngredientListConverter.class)
     private List<IngredientItem> ingredients;
+
     private boolean active = true;
 
     public Product() {}
 
     public Product(String id, String name, String tagline, double price, String description, int stockQuantity, String image, List<String> benefits, List<IngredientItem> ingredients, boolean active) {
-        this.id = id;
+        this.id = (id != null && !id.trim().isEmpty()) ? id : UUID.randomUUID().toString();
         this.name = name;
         this.tagline = tagline;
         this.price = price;
@@ -74,6 +93,9 @@ public class Product {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    public double getOriginalPrice() { return originalPrice; }
+    public void setOriginalPrice(double originalPrice) { this.originalPrice = originalPrice; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

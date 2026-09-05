@@ -28,6 +28,7 @@ import { AdminDashboardPage } from './pages/Admin/Dashboard';
 import { AdminOrdersPage } from './pages/Admin/Orders';
 import { AdminProductsPage } from './pages/Admin/Products';
 import { AdminSettingsPage } from './pages/Admin/Settings';
+import { AdminProfilePage } from './pages/Admin/Profile';
 
 // Scroll to top on navigation helper
 const ScrollToTop: React.FC = () => {
@@ -283,6 +284,14 @@ export const App: React.FC = () => {
                   element={
                     <MainLayout>
                       <AdminSettingsPage />
+                    </MainLayout>
+                  }
+                />
+                <Route
+                  path="/admin/profile"
+                  element={
+                    <MainLayout>
+                      <AdminProfilePage />
                     </MainLayout>
                   }
                 />

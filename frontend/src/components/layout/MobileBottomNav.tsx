@@ -74,9 +74,9 @@ export const MobileBottomNav: React.FC = () => {
         {/* Profile / Admin / Sign In Link */}
         {currentUser ? (
           <Link
-            to={isAdmin ? '/admin/dashboard' : '/profile'}
+            to={isAdmin ? '/admin/profile' : '/profile'}
             className={`flex flex-col items-center justify-center py-1 px-3 min-w-[56px] min-h-[48px] rounded-xl transition-colors ${
-              isActive('/profile') || isActive('/admin/dashboard')
+              isActive('/profile') || isActive('/admin/profile') || isActive('/admin/dashboard')
                 ? 'text-[#1F3D2E] font-bold'
                 : 'text-[#242824]/60 hover:text-[#315C45]'
             }`}

@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
             seedProducts();
             seedAdminUser();
         } catch (Exception e) {
-            logger.warn("Data initialization encountered non-fatal notice (MongoDB may be in offline fallback mode): {}", e.getMessage());
+            logger.warn("Data initialization notice: {}", e.getMessage());
         }
     }
 

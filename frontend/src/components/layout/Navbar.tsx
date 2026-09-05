@@ -103,9 +103,9 @@ export const Navbar: React.FC = () => {
             {/* Google Auth / Profile Button */}
             {currentUser ? (
               <Link
-                to={isAdmin ? '/admin/dashboard' : '/profile'}
+                to={isAdmin ? '/admin/profile' : '/profile'}
                 className="flex items-center gap-2 bg-[#F4F0E7] hover:bg-[#315C45]/10 p-1 pr-3 rounded-full border border-[#B89B5E]/50 transition-all"
-                title={isAdmin ? 'Kathirvelan Admin Dashboard' : 'My Profile'}
+                title={isAdmin ? 'Kathirvelan Admin Profile' : 'My Profile'}
               >
                 {currentUser.photoURL ? (
                   <img
@@ -119,7 +119,7 @@ export const Navbar: React.FC = () => {
                   </div>
                 )}
                 <span className="text-xs font-bold text-[#1F3D2E]">
-                  {isAdmin ? 'Admin' : (currentUser.displayName || 'Profile').split(' ')[0]}
+                  {isAdmin ? 'Admin Profile' : (currentUser.displayName || 'Profile').split(' ')[0]}
                 </span>
               </Link>
             ) : (
