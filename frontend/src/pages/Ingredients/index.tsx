@@ -5,14 +5,14 @@ import { DEFAULT_PRODUCT } from '../../services/api';
 
 export const IngredientsPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Pure Botanical Ingredients — Neem, Tulsi, Virgin Coconut Oil | SREVIA HERBS"
         description="Explore the traditional Ayurvedic ingredients behind PUREWHITE soap: Organic Neem, Holy Basil (Tulsi), Cold-Pressed Virgin Coconut Oil, and Plant Glycerin."
         keywords="Neem soap ingredients, Tulsi skincare benefits, virgin coconut oil soap, natural Ayurvedic ingredients, Kathirvelan Srevia Herbs"
         canonicalUrl="https://sreviaherbs.com/ingredients"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-custom">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">

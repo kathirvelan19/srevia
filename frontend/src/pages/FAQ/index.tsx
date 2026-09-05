@@ -34,14 +34,14 @@ export const FAQPage: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Frequently Asked Questions (FAQ) | Srevia Herbs"
         description="Find answers to common questions about Srevia Herbs PUREWHITE soap ingredients, shipping timelines, order tracking, and payment methods."
         keywords="Srevia Herbs FAQ, PUREWHITE soap questions, shipping info, payment options, Kathirvelan customer support"
         canonicalUrl="https://sreviaherbs.com/faq"
       />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="container-custom max-w-5xl space-y-12">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">

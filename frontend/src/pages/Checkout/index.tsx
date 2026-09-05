@@ -287,8 +287,8 @@ export const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
+      <div className="container-custom">
         
         {/* Checkout Header */}
         <div className="text-center max-w-2xl mx-auto mb-6 space-y-2">

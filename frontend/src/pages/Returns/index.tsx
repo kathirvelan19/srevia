@@ -4,14 +4,14 @@ import { SEO } from '../../components/seo/SEO';
 
 export const ReturnsPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Returns & Replacement Policy | Srevia Herbs"
         description="Learn about Srevia Herbs return guidelines, replacement process, and customer satisfaction commitments for PUREWHITE soap."
         keywords="Srevia Herbs returns, replacement policy, refund guidelines, customer support Kathirvelan"
         canonicalUrl="https://sreviaherbs.com/returns-policy"
       />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="container-custom max-w-4xl space-y-12">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">

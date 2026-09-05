@@ -19,8 +19,8 @@ export const OrderSuccess: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
+      <div className="container-custom max-w-3xl">
         
         <div className="bg-[#FCFBF7] rounded-3xl p-8 sm:p-12 border border-[#A8B9A3]/40 shadow-herbal space-y-8">
           

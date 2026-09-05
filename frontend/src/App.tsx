@@ -5,6 +5,7 @@ import { StoreProvider } from './context/StoreContext';
 import { CartProvider } from './context/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 
 // Pages
 import { Home } from './pages/Home';
@@ -116,6 +117,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <Navbar />
       <main className="flex-grow">{children}</main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 };

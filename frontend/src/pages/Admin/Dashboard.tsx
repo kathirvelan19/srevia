@@ -74,8 +74,8 @@ export const AdminDashboardPage: React.FC = () => {
   const deliveredCount = orders.filter((o) => o.orderStatus === 'DELIVERED').length;
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
+      <div className="container-custom space-y-8">
         
         {/* Admin Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#F4F0E7] pb-6 gap-4">

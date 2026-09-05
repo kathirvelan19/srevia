@@ -4,14 +4,14 @@ import { SEO } from '../../components/seo/SEO';
 
 export const PrivacyPolicyPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Privacy Policy | Srevia Herbs"
         description="Read Srevia Herbs Privacy Policy. How we protect customer personal data, addresses, and payment information."
         keywords="Srevia Herbs Privacy Policy, customer data protection, secure e-commerce privacy"
         canonicalUrl="https://sreviaherbs.com/privacy-policy"
       />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+      <div className="container-custom max-w-4xl space-y-12">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">

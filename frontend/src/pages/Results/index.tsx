@@ -4,14 +4,14 @@ import { SEO } from '../../components/seo/SEO';
 
 export const ResultsPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Real Skin Transformation & Customer Results | PUREWHITE SREVIA HERBS"
         description="See how daily herbal cleansing with PUREWHITE Anti-Pimple Soap transforms skin. Customer reviews, skin benefits, and 4-week ritual results."
         keywords="PUREWHITE soap results, herbal pimple soap reviews, Srevia Herbs customer experience, clear skin results"
         canonicalUrl="https://sreviaherbs.com/results"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+      <div className="container-custom space-y-16">
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">

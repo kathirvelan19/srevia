@@ -36,14 +36,14 @@ export const ProductPage: React.FC = () => {
   const discountPercent = originalPrice > price ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title={`PUREWHITE Herbal Anti-Pimple Soap | SREVIA HERBS (₹${price})`}
         description={`Buy PUREWHITE Herbal Anti-Pimple Soap online for ₹${price} (MRP ₹${originalPrice}). Clinically proven to reduce acne by up to 95% in just 4 weeks. Handcrafted with 100% natural ingredients.`}
         keywords="PUREWHITE soap, buy herbal anti pimple soap, Srevia Herbs product, Neem Tulsi soap online, acne removal soap India"
         canonicalUrl="https://sreviaherbs.com/product"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-custom">
         
         {/* Breadcrumb */}
         <div className="text-xs text-[#242824]/60 mb-8 flex items-center gap-2">

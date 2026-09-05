@@ -20,8 +20,8 @@ export const AdminProductsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
+      <div className="container-custom max-w-4xl space-y-8">
         
         <div className="flex items-center justify-between border-b border-[#F4F0E7] pb-6">
           <div>

@@ -82,10 +82,10 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO title="My Profile | SREVIA HERBS" description="View account details and order status." />
       
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="container-custom max-w-5xl space-y-8">
         
         {/* Profile Card */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#A8B9A3]/30 shadow-herbal flex flex-col md:flex-row items-center justify-between gap-6">

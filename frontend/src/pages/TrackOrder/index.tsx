@@ -102,14 +102,14 @@ export const TrackOrderPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Track Order | Real-Time 3-Stage Status — SREVIA HERBS"
         description="Track your Srevia Herbs PUREWHITE soap order status in real time across 3 stages: Order Received, Shipping, and Delivered."
         keywords="Track Srevia Herbs order, PUREWHITE order tracking, Srevia shipment status"
         canonicalUrl="https://sreviaherbs.com/track-order"
       />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-custom max-w-4xl">
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">

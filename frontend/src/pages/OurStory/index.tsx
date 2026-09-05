@@ -4,14 +4,14 @@ import barImg from '../../assets/purewhite_soap_bar.jpg';
 
 export const OurStoryPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-28 pb-20">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Our Story — Kathirvelan & SREVIA HERBS | Ayurvedic Heritage"
         description="Discover the story behind SREVIA HERBS founded by Kathirvelan in Coimbatore, Tamil Nadu. Bringing pure, traditional Indian herbal skincare to modern cleansing rituals."
         keywords="Srevia Herbs founder, Kathirvelan Coimbatore, Ayurvedic soap maker Tamil Nadu, herbal skincare brand India"
         canonicalUrl="https://sreviaherbs.com/our-story"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+      <div className="container-custom space-y-20">
         
         {/* Hero Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">

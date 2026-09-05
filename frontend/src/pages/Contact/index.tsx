@@ -52,14 +52,14 @@ export const Contact: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] pt-32 pb-24">
+    <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Contact Kathirvelan & Srevia Herbs | Customer Support & Inquiries"
         description="Get in touch with Kathirvelan and the SREVIA HERBS team online. Phone: +91 9025132739, Email: kathirvelankvr@gmail.com."
         keywords="Contact Srevia Herbs, Kathirvelan contact number, PUREWHITE soap customer support"
         canonicalUrl="https://sreviaherbs.com/contact"
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container-custom">
         
         {/* Page Header */}
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
