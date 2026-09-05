@@ -3,6 +3,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { DEFAULT_PRODUCT, api } from '../services/api';
 import type { Product, Order, OrderStatus } from '../types';
+import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
 
 export type Stage3Status = 'ORDER_RECEIVED' | 'SHIPPING' | 'DELIVERED';
 
@@ -235,6 +236,43 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     fetchLatestProduct();
     const interval = setInterval(fetchLatestProduct, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 3. Instant Supabase PostgreSQL Realtime Subscription
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      const channel = supabase
+        .channel('realtime:products')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'products' },
+          (payload) => {
+            if (payload.new) {
+              const p = payload.new as any;
+              const isAvail = checkStockAvailable(p);
+              lastLocalUpdateTimestamp = Date.now();
+              setProduct((prev) => ({
+                ...prev,
+                ...p,
+                inStock: isAvail,
+                active: isAvail,
+                stockQuantity: isAvail ? (p.stock_quantity ?? p.stockQuantity ?? 100) : 0,
+                price: typeof p.price === 'number' ? p.price : prev.price,
+                originalPrice: typeof p.original_price === 'number' ? p.original_price : (typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice),
+              }));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (e) {
+      console.warn("Supabase Realtime product channel notice:", e);
+    }
   }, []);
 
   const inStock = checkStockAvailable(product);
