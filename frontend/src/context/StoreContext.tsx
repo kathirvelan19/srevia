@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc, collection } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { DEFAULT_PRODUCT, api } from '../services/api';
 import type { Product, Order, OrderStatus } from '../types';
@@ -23,6 +23,9 @@ const STORAGE_KEY_PRODUCT = 'srevia_store_product';
 const STORAGE_KEY_ORDERS = 'srevia_store_orders';
 const RENDER_BACKEND_PRODUCTS_URL = 'https://sreviia-backend.onrender.com/api/products';
 const RENDER_BACKEND_STATUS_URL = 'https://sreviia-backend.onrender.com/api/products/status';
+const LOCAL_API_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://sreviia-backend.onrender.com/api' : 'http://localhost:8080/api');
+
+let lastLocalUpdateTimestamp = 0;
 
 const checkStockAvailable = (p: any): boolean => {
   if (!p) return true;
@@ -105,6 +108,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (e.data && e.data.product) {
           const p = e.data.product;
           const isAvail = checkStockAvailable(p);
+          lastLocalUpdateTimestamp = Date.now();
           setProduct((prev) => ({
             ...prev,
             ...p,
@@ -134,6 +138,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const detail = (e as CustomEvent).detail;
       if (detail) {
         const isAvail = checkStockAvailable(detail);
+        lastLocalUpdateTimestamp = Date.now();
         setProduct((prev) => ({
           ...prev,
           ...detail,
@@ -162,6 +167,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         try {
           const parsed = JSON.parse(e.newValue);
           const isAvail = checkStockAvailable(parsed);
+          lastLocalUpdateTimestamp = Date.now();
           setProduct((prev) => ({
             ...prev,
             ...parsed,
@@ -194,92 +200,40 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // 2. Firebase Firestore Real-Time Listener for Product & Orders
+  // 2. Persistent Backend Polling with Protection against Stale Overwrites
   useEffect(() => {
-    let unsubProduct = () => {};
-    let unsubOrders = () => {};
+    const fetchLatestProduct = async () => {
+      // Don't overwrite if local admin update happened within last 15 seconds
+      if (Date.now() - lastLocalUpdateTimestamp < 15000) {
+        return;
+      }
 
-    try {
-      const productRef = doc(db, 'store', 'product');
-      unsubProduct = onSnapshot(
-        productRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.data();
-            const isAvail = checkStockAvailable(data);
-            setProduct((prev) => ({
-              ...prev,
-              inStock: isAvail,
-              active: isAvail,
-              stockQuantity: isAvail ? (data.stockQuantity || 100) : 0,
-              price: typeof data.price === 'number' ? data.price : prev.price,
-              originalPrice: typeof data.originalPrice === 'number' ? data.originalPrice : prev.originalPrice,
-            }));
+      const tryUrls = [`${LOCAL_API_BASE}/products`, RENDER_BACKEND_PRODUCTS_URL];
+      for (const url of tryUrls) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const products = await res.json();
+            if (Array.isArray(products) && products.length > 0) {
+              const p = products[0];
+              const isAvail = checkStockAvailable(p);
+              setProduct((prev) => ({
+                ...prev,
+                inStock: isAvail,
+                active: isAvail,
+                stockQuantity: isAvail ? (p.stockQuantity !== undefined ? p.stockQuantity : 100) : 0,
+                price: typeof p.price === 'number' ? p.price : prev.price,
+                originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
+              }));
+              break;
+            }
           }
-        },
-        (error) => console.warn("Firestore product snapshot notice:", error)
-      );
-
-      const ordersRef = collection(db, 'orders');
-      unsubOrders = onSnapshot(
-        ordersRef,
-        (snapshot) => {
-          if (!snapshot.empty) {
-            snapshot.docChanges().forEach((change) => {
-              const data = change.doc.data() as Partial<Order>;
-              if (data.orderId && data.orderStatus) {
-                setOrders((prevOrders) => {
-                  const exists = prevOrders.some((o) => o.orderId.toLowerCase() === data.orderId!.toLowerCase());
-                  if (exists) {
-                    return prevOrders.map((o) =>
-                      o.orderId.toLowerCase() === data.orderId!.toLowerCase()
-                        ? { ...o, ...data } as Order
-                        : o
-                    );
-                  } else {
-                    return [data as Order, ...prevOrders];
-                  }
-                });
-              }
-            });
-          }
-        },
-        (error) => console.warn("Firestore orders snapshot notice:", error)
-      );
-    } catch (e) {
-      console.warn("Firestore setup notice:", e);
-    }
-
-    return () => {
-      unsubProduct();
-      unsubOrders();
-    };
-  }, []);
-
-  // 3. Fast Persistent Backend Polling
-  useEffect(() => {
-    const fetchLatestProduct = () => {
-      fetch(RENDER_BACKEND_PRODUCTS_URL)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((products) => {
-          if (Array.isArray(products) && products.length > 0) {
-            const p = products[0];
-            const isAvail = checkStockAvailable(p);
-            setProduct((prev) => ({
-              ...prev,
-              inStock: isAvail,
-              active: isAvail,
-              stockQuantity: isAvail ? (p.stockQuantity !== undefined ? p.stockQuantity : 100) : 0,
-              price: typeof p.price === 'number' ? p.price : prev.price,
-              originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
-            }));
-          }
-        })
-        .catch((e) => console.warn("Polling Render backend notice:", e));
+        } catch (e) {}
+      }
     };
 
     fetchLatestProduct();
-    const interval = setInterval(fetchLatestProduct, 2000);
+    const interval = setInterval(fetchLatestProduct, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -304,6 +258,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [orders]);
 
   const broadcastProductChange = (updated: Partial<Product>) => {
+    lastLocalUpdateTimestamp = Date.now();
     try {
       window.dispatchEvent(new CustomEvent('srevia_stock_change', { detail: updated }));
       const channel = new BroadcastChannel('srevia_store_channel');
@@ -343,23 +298,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    try {
-      await fetch(RENDER_BACKEND_STATUS_URL, {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      });
-    } catch (e) {
-      console.warn("Render backend status POST notice:", e);
-    }
+    const targetUrls = [
+      `${LOCAL_API_BASE}/products/status`,
+      RENDER_BACKEND_STATUS_URL
+    ];
 
-    try {
-      await fetch('/api/product', {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify(payload),
-      });
-    } catch (e) {}
+    for (const targetUrl of targetUrls) {
+      try {
+        await fetch(targetUrl, {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        console.warn("Product status POST notice for " + targetUrl, e);
+      }
+    }
 
     try {
       await setDoc(doc(db, 'store', 'product'), payload, { merge: true });
