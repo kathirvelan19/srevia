@@ -387,13 +387,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateOrderStatus = async (orderId: string, stage: OrderStatus | string) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((o) =>
+    setOrders((prevOrders) => {
+      const updated = prevOrders.map((o) =>
         o.orderId.toLowerCase() === orderId.toLowerCase()
           ? { ...o, orderStatus: stage as OrderStatus, updatedAt: new Date().toISOString() }
           : o
-      )
-    );
+      );
+      try {
+        localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
+        sessionStorage.setItem('mock_orders', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
 
     // Instant local & cross-tab broadcast
     broadcastOrderChange(orderId, stage);

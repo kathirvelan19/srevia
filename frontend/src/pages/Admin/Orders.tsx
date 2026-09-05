@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, CheckCircle2, XCircle, Eye, ArrowLeft } from 'lucide-react';
 import { api } from '../../services/api';
+import { useStore } from '../../context/StoreContext';
 import type { Order, OrderStatus } from '../../types';
 
 export const AdminOrdersPage: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { orders: storeOrders, updateOrderStatus: storeUpdateOrderStatus } = useStore();
+  const [remoteOrders, setRemoteOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -27,11 +29,21 @@ export const AdminOrdersPage: React.FC = () => {
   const loadOrders = async () => {
     if (!token) return;
     const data = await api.getAdminOrders(token);
-    setOrders(data);
+    setRemoteOrders(data);
   };
 
+  const combinedOrders = useMemo(() => {
+    const list = [...storeOrders];
+    remoteOrders.forEach((ro) => {
+      if (!list.some((so) => so.orderId.toUpperCase() === ro.orderId.toUpperCase())) {
+        list.push(ro);
+      }
+    });
+    return list;
+  }, [storeOrders, remoteOrders]);
+
   useEffect(() => {
-    let result = orders;
+    let result = combinedOrders;
 
     if (statusFilter !== 'ALL') {
       result = result.filter((o) => o.orderStatus === statusFilter || o.payment.status === statusFilter);
@@ -48,13 +60,13 @@ export const AdminOrdersPage: React.FC = () => {
     }
 
     setFilteredOrders(result);
-  }, [orders, statusFilter, searchQuery]);
+  }, [combinedOrders, statusFilter, searchQuery]);
 
   const handleVerifyPayment = async (orderId: string) => {
     if (!token) return;
     if (window.confirm(`Verify payment for Order ${orderId}?`)) {
       await api.updatePaymentStatus(token, orderId, 'VERIFIED');
-      await api.updateOrderStatus(token, orderId, 'CONFIRMED');
+      await storeUpdateOrderStatus(orderId, 'CONFIRMED');
       await loadOrders();
       if (selectedOrder?.orderId === orderId) {
         setSelectedOrder((prev) => prev ? { ...prev, payment: { ...prev.payment, status: 'VERIFIED' }, orderStatus: 'CONFIRMED' } : null);
@@ -72,9 +84,8 @@ export const AdminOrdersPage: React.FC = () => {
   };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
-    if (!token) return;
     if (window.confirm(`Change order status of ${orderId} to ${newStatus}?`)) {
-      await api.updateOrderStatus(token, orderId, newStatus);
+      await storeUpdateOrderStatus(orderId, newStatus);
       await loadOrders();
       if (selectedOrder?.orderId === orderId) {
         setSelectedOrder((prev) => prev ? { ...prev, orderStatus: newStatus as OrderStatus } : null);
