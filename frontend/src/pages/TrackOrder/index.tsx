@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
-import { Search, ShieldCheck, AlertCircle, Truck, CheckCircle2, Clock, PackageCheck, MapPin, Box, RefreshCw, XCircle, RotateCcw } from 'lucide-react';
+import { Search, ShieldCheck, AlertCircle, Truck, Package, RotateCcw, XCircle } from 'lucide-react';
 import { SEO } from '../../components/seo/SEO';
 import { api } from '../../services/api';
+import { orderService } from '../../services/orderService';
 import { useStore } from '../../context/StoreContext';
-import type { Order, OrderStatus } from '../../types';
+import { OrderStatusBadge } from '../../components/orders/OrderStatusBadge';
+import { OrderTimeline } from '../../components/orders/OrderTimeline';
+import type { Order } from '../../types';
 
 export const TrackOrderPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -16,6 +19,14 @@ export const TrackOrderPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [trackedOrder, setTrackedOrder] = useState<Order | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Modal State for Cancel/Return
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const rawOrderId = pathOrderId || searchParams.get('orderId');
@@ -68,6 +79,7 @@ export const TrackOrderPage: React.FC = () => {
     setLoading(true);
     setErrorMsg(null);
     setTrackedOrder(null);
+    setActionMessage(null);
 
     const cleanId = orderIdInput.trim().toUpperCase();
     const localFound = orders.find(
@@ -90,42 +102,58 @@ export const TrackOrderPage: React.FC = () => {
     }
   };
 
-  const STAGES: { key: OrderStatus[]; label: string; desc: string; icon: React.FC<{ className?: string }> }[] = [
-    { key: ['ORDER_PLACED', 'ORDER_RECEIVED', 'PAYMENT_SUBMITTED', 'PAYMENT_PENDING'], label: 'Order Placed', desc: 'Order details received', icon: Clock },
-    { key: ['CONFIRMED'], label: 'Confirmed', desc: 'Payment verified', icon: ShieldCheck },
-    { key: ['PROCESSING'], label: 'Processing', desc: 'Herbal batch in production', icon: RefreshCw },
-    { key: ['PACKED'], label: 'Packed', desc: 'Sealed & courier labeled', icon: Box },
-    { key: ['SHIPPED', 'SHIPPING'], label: 'Shipped', desc: 'Handed to courier partner', icon: Truck },
-    { key: ['OUT_FOR_DELIVERY'], label: 'Out for Delivery', desc: 'Out with delivery executive', icon: MapPin },
-    { key: ['DELIVERED'], label: 'Delivered', desc: 'Package handed to customer', icon: PackageCheck },
-  ];
-
-  const getStageStepIndex = (status?: string): number => {
-    if (!status) return 0;
-    const s = status.toUpperCase();
-    if (s === 'DELIVERED') return 6;
-    if (s === 'OUT_FOR_DELIVERY') return 5;
-    if (s === 'SHIPPED' || s === 'SHIPPING') return 4;
-    if (s === 'PACKED') return 3;
-    if (s === 'PROCESSING') return 2;
-    if (s === 'CONFIRMED') return 1;
-    return 0;
+  const handleCancelOrder = async () => {
+    if (!trackedOrder || !cancelReason.trim()) return;
+    setActionLoading(true);
+    setActionMessage(null);
+    try {
+      const res = await orderService.cancelOrder(trackedOrder.orderId, cancelReason.trim());
+      if (res.success) {
+        if (res.order) setTrackedOrder(res.order);
+        else setTrackedOrder((prev) => prev ? { ...prev, orderStatus: 'CANCELLED' } : null);
+        setShowCancelModal(false);
+        setCancelReason('');
+        setActionMessage({ type: 'success', text: 'Order has been successfully cancelled.' });
+      } else {
+        setActionMessage({ type: 'error', text: res.message || 'Failed to cancel order.' });
+      }
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err?.message || 'Failed to cancel order.' });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const isExceptionState = (status?: string) => {
-    if (!status) return false;
-    const s = status.toUpperCase();
-    return ['CANCELLED', 'PAYMENT_FAILED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'].includes(s);
+  const handleReturnOrder = async () => {
+    if (!trackedOrder || !returnReason.trim()) return;
+    setActionLoading(true);
+    setActionMessage(null);
+    try {
+      const res = await orderService.requestReturn(trackedOrder.orderId, returnReason.trim());
+      if (res.success) {
+        if (res.order) setTrackedOrder(res.order);
+        else setTrackedOrder((prev) => prev ? { ...prev, orderStatus: 'RETURN_REQUESTED' } : null);
+        setShowReturnModal(false);
+        setReturnReason('');
+        setActionMessage({ type: 'success', text: 'Return request submitted successfully. Our support team will reach out.' });
+      } else {
+        setActionMessage({ type: 'error', text: res.message || 'Failed to submit return request.' });
+      }
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err?.message || 'Failed to submit return request.' });
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const activeStepIdx = trackedOrder ? getStageStepIndex(trackedOrder.orderStatus) : 0;
-  const isException = trackedOrder ? isExceptionState(trackedOrder.orderStatus) : false;
+  const canCancel = trackedOrder && ['PLACED', 'ORDER_PLACED', 'ORDER_RECEIVED', 'PAYMENT_SUBMITTED', 'PAYMENT_PENDING', 'CONFIRMED'].includes((trackedOrder.orderStatus || '').toUpperCase());
+  const canReturn = trackedOrder && (trackedOrder.orderStatus || '').toUpperCase() === 'DELIVERED';
 
   return (
     <div className="min-h-screen bg-[#FCFBF7] page-header-offset">
       <SEO
         title="Track Order | Real-Time Order Status — SREVIA HERBS"
-        description="Track your Srevia Herbs PUREWHITE soap order status in real time across 7 lifecycle stages."
+        description="Track your Srevia Herbs PUREWHITE soap order status in real time across the 12-state order lifecycle."
         keywords="Track Srevia Herbs order, PUREWHITE order tracking, Srevia shipment status"
         canonicalUrl="https://sreviaherbs.com/track-order"
       />
@@ -134,13 +162,13 @@ export const TrackOrderPage: React.FC = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#B89B5E]">
-            REAL-TIME ORDER LIFECYCLE
+            REAL-TIME ORDER MANAGEMENT SYSTEM
           </span>
           <h1 className="font-serif-display text-3xl sm:text-4xl font-bold text-[#1F3D2E]">
-            Track Your Srevia Herbs Order
+            Track Your Order Status
           </h1>
           <p className="text-xs text-[#242824]/70 font-light">
-            Enter your Order ID (e.g. SRV-20260903-1001) to view live status updates.
+            Enter your Order ID (e.g. SRV-20260903-1001) to view live status & carrier updates.
           </p>
         </div>
 
@@ -206,141 +234,126 @@ export const TrackOrderPage: React.FC = () => {
                 <h2 className="font-serif-display text-3xl font-bold text-[#1F3D2E]">
                   ORDER #{trackedOrder.orderId}
                 </h2>
-                <p className="text-xs text-[#242824]/60">Placed on: {new Date(trackedOrder.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-[#242824]/60">Placed on: {new Date(trackedOrder.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
               </div>
 
-              <div className="bg-[#1F3D2E] text-white px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-md">
-                <ShieldCheck className="w-4 h-4 text-[#B89B5E]" />
-                <span>Current Status: <strong className="text-[#B89B5E] uppercase">{trackedOrder.orderStatus.replace('_', ' ')}</strong></span>
+              <div className="flex flex-col sm:items-end gap-2">
+                <OrderStatusBadge status={trackedOrder.orderStatus} className="text-sm px-4 py-2" />
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-1">
+                  {canCancel && (
+                    <button
+                      onClick={() => setShowCancelModal(true)}
+                      className="bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold px-3 py-1.5 rounded-xl border border-red-200 transition-colors flex items-center gap-1"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Cancel Order</span>
+                    </button>
+                  )}
+                  {canReturn && (
+                    <button
+                      onClick={() => setShowReturnModal(true)}
+                      className="bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1.5 rounded-xl border border-purple-200 transition-colors flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Request Return</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Exception State Alert Banner */}
-            {isException && (
-              <div className="bg-amber-50 border border-amber-200 text-amber-900 p-5 rounded-2xl space-y-2 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                  {trackedOrder.orderStatus === 'CANCELLED' && <XCircle className="w-5 h-5 text-red-600" />}
-                  {trackedOrder.orderStatus === 'PAYMENT_FAILED' && <AlertCircle className="w-5 h-5 text-red-600" />}
-                  {trackedOrder.orderStatus === 'RETURN_REQUESTED' && <RotateCcw className="w-5 h-5 text-amber-700" />}
-                  {trackedOrder.orderStatus === 'RETURNED' && <RotateCcw className="w-5 h-5 text-amber-700" />}
-                  {trackedOrder.orderStatus === 'REFUNDED' && <CheckCircle2 className="w-5 h-5 text-emerald-700" />}
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm text-[#1F3D2E] uppercase tracking-wider">
-                    Status: {trackedOrder.orderStatus.replace('_', ' ')}
-                  </h4>
-                  <p className="text-xs opacity-90 leading-relaxed mt-0.5">
-                    {trackedOrder.orderStatus === 'CANCELLED' && 'This order has been cancelled. If you have questions, contact Kathirvelan (+91 9025132739).'}
-                    {trackedOrder.orderStatus === 'PAYMENT_FAILED' && 'Payment verification failed. Please try placing a new order or reach out for assistance.'}
-                    {trackedOrder.orderStatus === 'RETURN_REQUESTED' && 'Return request received. Our team will contact you for pickup & inspection.'}
-                    {trackedOrder.orderStatus === 'RETURNED' && 'Returned item received at facility.'}
-                    {trackedOrder.orderStatus === 'REFUNDED' && 'Payment has been refunded back to your original payment method.'}
-                  </p>
-                </div>
+            {/* Action Feedback Message */}
+            {actionMessage && (
+              <div className={`p-4 rounded-2xl text-xs flex items-center gap-3 border ${
+                actionMessage.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'
+              }`}>
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{actionMessage.text}</span>
               </div>
             )}
 
-            {/* 7-STAGE LINEAR TIMELINE */}
-            {!isException && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-serif-display text-xl font-bold text-[#1F3D2E]">Live 7-Stage Order Lifecycle</h3>
-                  <span className="text-xs font-semibold text-[#315C45] bg-[#315C45]/10 px-3 py-1 rounded-full">
-                    Step {activeStepIdx + 1} of 7
-                  </span>
+            {/* Carrier & Tracking Details Component */}
+            {(trackedOrder.courier || trackedOrder.trackingNumber) && (
+              <div className="bg-[#1F3D2E] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#B89B5E]/20 text-[#B89B5E] flex items-center justify-center shrink-0">
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-[#B89B5E] tracking-widest">COURIER DISPATCH</span>
+                    <p className="font-semibold text-sm">{trackedOrder.courier || 'Express Courier Partner'}</p>
+                  </div>
                 </div>
-
-                {/* Desktop 7-Stage Progress Bar */}
-                <div className="hidden lg:grid grid-cols-7 gap-2 relative pt-2">
-                  {STAGES.map((stage, idx) => {
-                    const isPassed = idx <= activeStepIdx;
-                    const isCurrent = idx === activeStepIdx;
-                    const IconComponent = stage.icon;
-                    return (
-                      <div key={idx} className="flex flex-col items-center text-center space-y-2 relative">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                            isCurrent
-                              ? 'bg-[#1F3D2E] text-[#B89B5E] shadow-lg ring-4 ring-[#B89B5E]/30 scale-110'
-                              : isPassed
-                              ? 'bg-[#315C45] text-white'
-                              : 'bg-[#F4F0E7] text-gray-400 border border-[#A8B9A3]/30'
-                          }`}
-                        >
-                          <IconComponent className="w-5 h-5" />
-                        </div>
-                        <span className={`text-[11px] font-bold tracking-tight ${isPassed ? 'text-[#1F3D2E]' : 'text-gray-400'}`}>
-                          {stage.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile / Tablet Vertical Timeline Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {STAGES.map((stage, idx) => {
-                    const isPassed = idx <= activeStepIdx;
-                    const isCurrent = idx === activeStepIdx;
-                    const IconComponent = stage.icon;
-                    return (
-                      <div
-                        key={idx}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          isCurrent
-                            ? 'bg-[#1F3D2E] text-white shadow-herbal border-[#B89B5E]'
-                            : isPassed
-                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
-                            : 'bg-gray-50/60 border-gray-200 text-gray-400'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                            isCurrent
-                              ? 'bg-[#B89B5E] text-[#1F3D2E]'
-                              : isPassed
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-gray-200 text-gray-500'
-                          }`}>
-                            <IconComponent className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <span className="text-[9px] font-bold uppercase tracking-wider opacity-75">STAGE {idx + 1}</span>
-                            <h4 className="font-bold text-xs">{stage.label}</h4>
-                            <p className="text-[11px] opacity-80 mt-0.5">{stage.desc}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
+                {trackedOrder.trackingNumber && (
+                  <div className="bg-[#315C45] px-4 py-2 rounded-xl text-xs flex items-center gap-2 border border-[#A8B9A3]/30">
+                    <span className="text-[#B89B5E] font-semibold">AWB Tracking No:</span>
+                    <strong className="font-mono tracking-wider text-white select-all">{trackedOrder.trackingNumber}</strong>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Customer Details Summary */}
-            <div className="pt-6 border-t border-[#F4F0E7] grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-[#242824]/85">
-              <div className="bg-[#F4F0E7]/40 p-4 rounded-2xl space-y-1">
-                <h4 className="font-bold text-[#1F3D2E] uppercase tracking-wider text-[11px]">Delivery Address</h4>
-                <p className="font-semibold text-sm text-[#1F3D2E]">{trackedOrder.customer.name}</p>
-                <p>{trackedOrder.customer.address.house}, {trackedOrder.customer.address.street}</p>
-                <p>{trackedOrder.customer.address.city}, {trackedOrder.customer.address.state} — {trackedOrder.customer.address.pincode}</p>
-                <p className="font-semibold text-[#315C45] pt-1">Phone: {trackedOrder.customer.phone}</p>
+            {/* LIVE ORDER TIMELINE */}
+            <div className="space-y-4">
+              <h3 className="font-serif-display text-xl font-bold text-[#1F3D2E] flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[#B89B5E]" />
+                <span>Order Lifecycle Audit & Status Timeline</span>
+              </h3>
+              
+              <OrderTimeline
+                currentStatus={trackedOrder.orderStatus}
+                history={trackedOrder.statusHistory}
+              />
+            </div>
+
+            {/* Order Items & Customer Summary */}
+            <div className="pt-6 border-t border-[#F4F0E7] space-y-6">
+              <h4 className="font-serif-display text-lg font-bold text-[#1F3D2E]">Ordered Items & Shipping Details</h4>
+              
+              {/* Items List */}
+              <div className="bg-[#F4F0E7]/40 rounded-2xl p-4 divide-y divide-[#A8B9A3]/20">
+                {trackedOrder.items.map((item, idx) => (
+                  <div key={idx} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#315C45]/10 flex items-center justify-center text-[#315C45]">
+                        <Package className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-[#1F3D2E]">{item.productName}</p>
+                        <p className="text-[#242824]/60">Qty: {item.quantity} × ₹{item.unitPrice}</p>
+                      </div>
+                    </div>
+                    <span className="font-bold text-[#1F3D2E]">₹{item.totalPrice || item.quantity * item.unitPrice}</span>
+                  </div>
+                ))}
               </div>
 
-              <div className="bg-[#F4F0E7]/40 p-4 rounded-2xl space-y-2">
-                <h4 className="font-bold text-[#1F3D2E] uppercase tracking-wider text-[11px]">Order Payment Details</h4>
-                <div className="flex justify-between border-b border-[#A8B9A3]/20 pb-1">
-                  <span>Method:</span>
-                  <span className="font-bold text-[#1F3D2E]">{trackedOrder.payment.method}</span>
+              {/* Delivery Address & Payment */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs text-[#242824]/85">
+                <div className="bg-[#F4F0E7]/40 p-4 rounded-2xl space-y-1">
+                  <h5 className="font-bold text-[#1F3D2E] uppercase tracking-wider text-[11px]">Delivery Address</h5>
+                  <p className="font-semibold text-sm text-[#1F3D2E]">{trackedOrder.customer.name}</p>
+                  <p>{trackedOrder.customer.address.house}, {trackedOrder.customer.address.street}</p>
+                  <p>{trackedOrder.customer.address.city}, {trackedOrder.customer.address.state} — {trackedOrder.customer.address.pincode}</p>
+                  <p className="font-semibold text-[#315C45] pt-1">Phone: {trackedOrder.customer.phone}</p>
                 </div>
-                <div className="flex justify-between border-b border-[#A8B9A3]/20 pb-1">
-                  <span>Payment Status:</span>
-                  <span className="font-bold text-emerald-800 uppercase">{trackedOrder.payment.status}</span>
-                </div>
-                <div className="flex justify-between pt-1">
-                  <span className="font-bold text-[#1F3D2E]">Total Amount:</span>
-                  <span className="font-extrabold text-base text-[#1F3D2E]">₹{trackedOrder.totalAmount}</span>
+
+                <div className="bg-[#F4F0E7]/40 p-4 rounded-2xl space-y-2">
+                  <h5 className="font-bold text-[#1F3D2E] uppercase tracking-wider text-[11px]">Payment Summary</h5>
+                  <div className="flex justify-between border-b border-[#A8B9A3]/20 pb-1">
+                    <span>Payment Method:</span>
+                    <span className="font-bold text-[#1F3D2E]">{trackedOrder.payment.method}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-[#A8B9A3]/20 pb-1">
+                    <span>Payment Status:</span>
+                    <span className="font-bold text-emerald-800 uppercase">{trackedOrder.payment.status}</span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="font-bold text-[#1F3D2E]">Total Paid:</span>
+                    <span className="font-extrabold text-base text-[#1F3D2E]">₹{trackedOrder.totalAmount}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -349,6 +362,103 @@ export const TrackOrderPage: React.FC = () => {
         )}
 
       </div>
+
+      {/* Cancel Order Modal */}
+      {showCancelModal && trackedOrder && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[#A8B9A3]/30 shadow-2xl space-y-5 animate-fade-in">
+            <div className="flex items-center gap-3 text-red-700">
+              <XCircle className="w-7 h-7" />
+              <h3 className="text-xl font-bold font-serif-display text-[#1F3D2E]">Cancel Order #{trackedOrder.orderId}</h3>
+            </div>
+
+            <p className="text-xs text-[#242824]/80 leading-relaxed">
+              Are you sure you want to cancel this order? Please state your reason for cancellation below.
+            </p>
+
+            <div>
+              <label className="block text-xs font-bold text-[#1F3D2E] uppercase tracking-wider mb-1.5">
+                Reason for Cancellation *
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="e.g. Changed my mind / Ordered wrong item..."
+                className="w-full p-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-xs focus:outline-none focus:border-[#315C45]"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading || !cancelReason.trim()}
+                onClick={handleCancelOrder}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-md transition-all disabled:opacity-50"
+              >
+                {actionLoading ? 'Cancelling...' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return Request Modal */}
+      {showReturnModal && trackedOrder && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[#A8B9A3]/30 shadow-2xl space-y-5 animate-fade-in">
+            <div className="flex items-center gap-3 text-purple-800">
+              <RotateCcw className="w-7 h-7" />
+              <h3 className="text-xl font-bold font-serif-display text-[#1F3D2E]">Request Return #{trackedOrder.orderId}</h3>
+            </div>
+
+            <p className="text-xs text-[#242824]/80 leading-relaxed">
+              We're sorry the order didn't meet your expectations. Please describe the issue to initiate a return request.
+            </p>
+
+            <div>
+              <label className="block text-xs font-bold text-[#1F3D2E] uppercase tracking-wider mb-1.5">
+                Reason for Return *
+              </label>
+              <textarea
+                rows={3}
+                required
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder="e.g. Damaged packaging / Defective item..."
+                className="w-full p-3 bg-[#F4F0E7]/60 border border-[#A8B9A3]/40 rounded-xl text-xs focus:outline-none focus:border-[#315C45]"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading || !returnReason.trim()}
+                onClick={handleReturnOrder}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-purple-700 hover:bg-purple-800 text-white shadow-md transition-all disabled:opacity-50"
+              >
+                {actionLoading ? 'Submitting...' : 'Submit Return Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

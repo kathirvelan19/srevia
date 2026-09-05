@@ -1,4 +1,4 @@
-import type { Product, Order, ContactMessage } from '../types';
+import type { Product, Order, OrderStatus, ContactMessage } from '../types';
 import purewhiteSoapImg from '../assets/purewhite_soap_bar.jpg';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://sreviia-backend.onrender.com/api' : 'http://localhost:8080/api');
@@ -125,7 +125,7 @@ export const api = {
         deliveryCharge: (payloadObj as Order).deliveryCharge || 49,
         totalAmount: (payloadObj as Order).totalAmount || 129,
         payment: (payloadObj as Order).payment || { method: 'UPI_QR', status: 'SUBMITTED', utr: 'UTR' + Math.floor(Math.random() * 100000000) },
-        orderStatus: 'PAYMENT_SUBMITTED',
+        orderStatus: 'PAYMENT_SUBMITTED' as OrderStatus,
         googleSheetsSynced: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -261,7 +261,7 @@ export const api = {
           deliveryCharge: 0,
           totalAmount: 298,
           payment: { method: 'UPI_QR', status: 'SUBMITTED', utr: 'UPI20260829987654' },
-          orderStatus: 'PAYMENT_SUBMITTED',
+          orderStatus: 'PAYMENT_SUBMITTED' as OrderStatus,
           googleSheetsSynced: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()

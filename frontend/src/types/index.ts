@@ -28,78 +28,7 @@ export interface IngredientItem {
   image?: string;
 }
 
-export interface CustomerAddress {
-  house: string;
-  street: string;
-  area: string;
-  city: string;
-  state: string;
-  pincode: string;
-}
-
-export interface CustomerInfo {
-  name: string;
-  phone: string;
-  email: string;
-  address: CustomerAddress;
-}
-
-export interface OrderItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-export type PaymentMethod = 'RAZORPAY' | 'UPI_QR';
-
-export type PaymentStatus = 'PENDING' | 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
-
-export type OrderStatus =
-  | 'PLACED'
-  | 'ORDER_PLACED'
-  | 'ORDER_RECEIVED'
-  | 'PAYMENT_PENDING'
-  | 'PAYMENT_SUBMITTED'
-  | 'SUBMITTED'
-  | 'CONFIRMED'
-  | 'PROCESSING'
-  | 'PACKED'
-  | 'SHIPPING'
-  | 'SHIPPED'
-  | 'OUT_FOR_DELIVERY'
-  | 'DELIVERED'
-  | 'CANCELLED'
-  | 'PAYMENT_FAILED'
-  | 'RETURN_REQUESTED'
-  | 'RETURNED'
-  | 'REFUNDED';
-
-export interface OrderPaymentInfo {
-  method: PaymentMethod;
-  status: PaymentStatus;
-  utr?: string;
-  screenshotUrl?: string;
-  razorpayOrderId?: string;
-  razorpayPaymentId?: string;
-  rejectionReason?: string;
-}
-
-export interface Order {
-  id?: string;
-  orderId: string;
-  customer: CustomerInfo;
-  items: OrderItem[];
-  subtotal: number;
-  deliveryCharge: number;
-  totalAmount: number;
-  payment: OrderPaymentInfo;
-  orderStatus: OrderStatus;
-  googleSheetsSynced: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+export * from './order';
 
 export interface ContactMessage {
   id?: string;

@@ -68,7 +68,7 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const totalOrders = orders.length;
-  const placedCount = orders.filter((o) => o.orderStatus === 'PLACED' || o.orderStatus === 'SUBMITTED' || (o.orderStatus as string) === 'ORDER_RECEIVED').length;
+  const placedCount = orders.filter((o) => o.orderStatus === 'PLACED' || (o.orderStatus as string) === 'SUBMITTED' || (o.orderStatus as string) === 'ORDER_RECEIVED').length;
   const processingCount = orders.filter((o) => o.orderStatus === 'CONFIRMED' || o.orderStatus === 'PROCESSING' || o.orderStatus === 'PACKED').length;
   const shippingCount = orders.filter((o) => o.orderStatus === 'SHIPPED' || o.orderStatus === 'OUT_FOR_DELIVERY' || (o.orderStatus as string) === 'SHIPPING').length;
   const deliveredCount = orders.filter((o) => o.orderStatus === 'DELIVERED').length;

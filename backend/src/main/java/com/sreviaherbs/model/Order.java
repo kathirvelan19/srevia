@@ -16,6 +16,7 @@ public class Order {
     @Indexed(unique = true)
     private String orderId;
 
+    private String userId;
     private CustomerInfo customer;
     private List<OrderItem> items;
     private double subtotal;
@@ -23,13 +24,17 @@ public class Order {
     private double totalAmount;
 
     private OrderPaymentInfo payment;
-    private String orderStatus; // PAYMENT_PENDING, PAYMENT_SUBMITTED, CONFIRMED, PROCESSING, PACKED, SHIPPED, DELIVERED, CANCELLED
+    private String orderStatus;
+
+    private String trackingNumber;
+    private String courier;
+    private List<OrderStatusHistory> statusHistory = new java.util.ArrayList<>();
 
     private boolean googleSheetsSynced = false;
 
     private boolean emailSent = false;
     private Instant emailSentAt;
-    private String emailStatus = "PENDING"; // PENDING, SENT, FAILED
+    private String emailStatus = "PENDING";
 
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
@@ -41,6 +46,9 @@ public class Order {
 
     public String getOrderId() { return orderId; }
     public void setOrderId(String orderId) { this.orderId = orderId; }
+
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public CustomerInfo getCustomer() { return customer; }
     public void setCustomer(CustomerInfo customer) { this.customer = customer; }
@@ -62,6 +70,15 @@ public class Order {
 
     public String getOrderStatus() { return orderStatus; }
     public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
+
+    public String getTrackingNumber() { return trackingNumber; }
+    public void setTrackingNumber(String trackingNumber) { this.trackingNumber = trackingNumber; }
+
+    public String getCourier() { return courier; }
+    public void setCourier(String courier) { this.courier = courier; }
+
+    public List<OrderStatusHistory> getStatusHistory() { return statusHistory; }
+    public void setStatusHistory(List<OrderStatusHistory> statusHistory) { this.statusHistory = statusHistory; }
 
     public boolean isGoogleSheetsSynced() { return googleSheetsSynced; }
     public void setGoogleSheetsSynced(boolean googleSheetsSynced) { this.googleSheetsSynced = googleSheetsSynced; }

@@ -79,6 +79,23 @@ public class OrderService {
             order.setOrderId(generateUniqueOrderId());
         }
 
+        if (order.getOrderStatus() == null || order.getOrderStatus().trim().isEmpty()) {
+            order.setOrderStatus("PLACED");
+        }
+
+        // Initialize status history if empty
+        if (order.getStatusHistory() == null) {
+            order.setStatusHistory(new java.util.ArrayList<>());
+        }
+        if (order.getStatusHistory().isEmpty()) {
+            order.getStatusHistory().add(new com.sreviaherbs.model.OrderStatusHistory(
+                    order.getOrderId(),
+                    order.getOrderStatus(),
+                    "Order placed successfully by customer",
+                    "CUSTOMER"
+            ));
+        }
+
         // 4. Save order to MongoDB
         Order savedOrder = orderRepository.save(order);
         logger.info("Order saved securely with server-calculated total ₹{} for Order ID: {}", savedOrder.getTotalAmount(), savedOrder.getOrderId());
@@ -105,6 +122,58 @@ public class OrderService {
         }
 
         return savedOrder;
+    }
+
+    public static boolean isValidTransition(String currentStatus, String targetStatus) {
+        if (currentStatus == null || targetStatus == null) return false;
+        String from = currentStatus.toUpperCase().trim();
+        String to = targetStatus.toUpperCase().trim();
+
+        if (from.equals(to)) return true; // Idempotent updates allowed
+
+        switch (from) {
+            case "PLACED":
+            case "ORDER_PLACED":
+            case "ORDER_RECEIVED":
+            case "PAYMENT_SUBMITTED":
+            case "PAYMENT_PENDING":
+            case "SUBMITTED":
+                return to.equals("CONFIRMED") || to.equals("CANCELLED") || to.equals("PAYMENT_FAILED");
+
+            case "CONFIRMED":
+                return to.equals("PROCESSING") || to.equals("CANCELLED");
+
+            case "PROCESSING":
+                return to.equals("PACKED") || to.equals("CANCELLED");
+
+            case "PACKED":
+                return to.equals("SHIPPED") || to.equals("CANCELLED");
+
+            case "SHIPPED":
+                return to.equals("OUT_FOR_DELIVERY");
+
+            case "OUT_FOR_DELIVERY":
+                return to.equals("DELIVERED");
+
+            case "DELIVERED":
+                return to.equals("RETURN_REQUESTED");
+
+            case "RETURN_REQUESTED":
+                return to.equals("RETURNED");
+
+            case "RETURNED":
+                return to.equals("REFUNDED");
+
+            case "PAYMENT_FAILED":
+                return to.equals("PLACED") || to.equals("CANCELLED");
+
+            case "CANCELLED":
+            case "REFUNDED":
+                return false; // Terminal states
+
+            default:
+                return true;
+        }
     }
 
     public Optional<Order> getOrderByOrderId(String orderId) {
@@ -144,7 +213,13 @@ public class OrderService {
                 }
             }
             if ("VERIFIED".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
-                order.setOrderStatus("CONFIRMED");
+                if (isValidTransition(order.getOrderStatus(), "CONFIRMED")) {
+                    order.setOrderStatus("CONFIRMED");
+                    if (order.getStatusHistory() == null) order.setStatusHistory(new java.util.ArrayList<>());
+                    order.getStatusHistory().add(new com.sreviaherbs.model.OrderStatusHistory(
+                            orderId, "CONFIRMED", "Payment verified by Admin", "ADMIN"
+                    ));
+                }
             }
             order.setUpdatedAt(Instant.now());
             Order updated = orderRepository.save(order);
@@ -178,19 +253,47 @@ public class OrderService {
     }
 
     public Optional<Order> updateOrderStatus(String orderId, String status) {
+        return updateOrderStatus(orderId, status, null, null, null, "ADMIN");
+    }
+
+    public Optional<Order> updateOrderStatus(String orderId, String targetStatus, String trackingNumber, String courier, String message, String changedBy) {
         Optional<Order> orderOpt = orderRepository.findByOrderId(orderId);
         if (orderOpt.isPresent()) {
             Order order = orderOpt.get();
-            order.setOrderStatus(status);
+            String currentStatus = order.getOrderStatus() != null ? order.getOrderStatus() : "PLACED";
+
+            if (!isValidTransition(currentStatus, targetStatus)) {
+                logger.warn("Invalid status transition attempt for order {}: {} -> {}", orderId, currentStatus, targetStatus);
+                throw new IllegalArgumentException("Invalid status transition from " + currentStatus + " to " + targetStatus);
+            }
+
+            order.setOrderStatus(targetStatus.toUpperCase());
+            if (trackingNumber != null && !trackingNumber.trim().isEmpty()) {
+                order.setTrackingNumber(trackingNumber.trim());
+            }
+            if (courier != null && !courier.trim().isEmpty()) {
+                order.setCourier(courier.trim());
+            }
             order.setUpdatedAt(Instant.now());
+
+            if (order.getStatusHistory() == null) {
+                order.setStatusHistory(new java.util.ArrayList<>());
+            }
+            String historyMsg = message != null && !message.trim().isEmpty()
+                    ? message.trim()
+                    : "Order status updated to " + targetStatus.toUpperCase();
+            order.getStatusHistory().add(new com.sreviaherbs.model.OrderStatusHistory(
+                    orderId, targetStatus.toUpperCase(), historyMsg, changedBy != null ? changedBy : "ADMIN"
+            ));
+
             Order saved = orderRepository.save(order);
 
             // Audit Log Event
-            auditLogService.logAction("ORDER_STATUS_UPDATE", "Kathirvelan Admin", "Order " + orderId + " status updated to " + status, "127.0.0.1");
+            auditLogService.logAction("ORDER_STATUS_UPDATE", changedBy != null ? changedBy : "Kathirvelan Admin", "Order " + orderId + " status updated to " + targetStatus, "127.0.0.1");
 
             // Send Order Status Update Email
             try {
-                orderEmailService.sendOrderStatusUpdate(saved, status, "Your SREVIA HERBS order #" + saved.getOrderId() + " status is now " + status);
+                orderEmailService.sendOrderStatusUpdate(saved, targetStatus, historyMsg);
             } catch (Exception e) {
                 logger.error("Failed to send order status update email for order {}", saved.getOrderId(), e);
             }
@@ -198,6 +301,18 @@ public class OrderService {
             return Optional.of(saved);
         }
         return Optional.empty();
+    }
+
+    public Optional<Order> cancelOrder(String orderId, String reason, String changedBy) {
+        return updateOrderStatus(orderId, "CANCELLED", null, null, reason != null ? reason : "Order cancelled", changedBy);
+    }
+
+    public Optional<Order> requestReturn(String orderId, String reason, String changedBy) {
+        return updateOrderStatus(orderId, "RETURN_REQUESTED", null, null, reason != null ? reason : "Return requested by customer", changedBy);
+    }
+
+    public Optional<Order> refundOrder(String orderId, String reason, String changedBy) {
+        return updateOrderStatus(orderId, "REFUNDED", null, null, reason != null ? reason : "Order refunded", changedBy);
     }
 
     public boolean retryGoogleSheetsSync(String orderId) {

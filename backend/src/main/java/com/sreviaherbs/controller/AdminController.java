@@ -61,16 +61,47 @@ public class AdminController {
         return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/orders/{orderId}/status")
     @PatchMapping("/orders/{orderId}/status")
     public ResponseEntity<?> updateOrderStatus(
             @PathVariable String orderId,
             @RequestBody StatusUpdateDto payload) {
-
-        Optional<Order> updated = orderService.updateOrderStatus(orderId, payload.getOrderStatus());
-        if (updated.isPresent()) {
-            return ResponseEntity.ok(updated.get());
+        try {
+            String targetStatus = payload.getStatus();
+            if (targetStatus == null || targetStatus.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, "Status is required"));
+            }
+            Optional<Order> updated = orderService.updateOrderStatus(
+                    orderId,
+                    targetStatus,
+                    payload.getTrackingNumber(),
+                    payload.getCourier(),
+                    payload.getMessage(),
+                    "ADMIN"
+            );
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(updated.get());
+            }
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), "INVALID_TRANSITION"));
         }
-        return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/orders/{orderId}/refund")
+    public ResponseEntity<?> refundOrder(
+            @PathVariable String orderId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        try {
+            String reason = body != null ? body.get("reason") : "Order refunded by Admin";
+            Optional<Order> updated = orderService.refundOrder(orderId, reason, "ADMIN");
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(updated.get());
+            }
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), "INVALID_TRANSITION"));
+        }
     }
 
     @PostMapping("/google-sheets/retry/{orderId}")

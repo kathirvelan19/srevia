@@ -64,12 +64,87 @@ public class OrderController {
     @GetMapping("/{orderId}/track")
     public ResponseEntity<?> trackOrder(
             @PathVariable String orderId,
-            @RequestParam String phone) {
+            @RequestParam(required = false, defaultValue = "") String phone) {
 
         Optional<Order> orderOpt = orderService.trackOrder(orderId, phone);
         if (orderOpt.isPresent()) {
             return ResponseEntity.ok(orderOpt.get());
         }
         return ResponseEntity.status(404).body(new ApiResponseDto<>(false, "Order not found or phone number mismatch", "ORDER_NOT_FOUND"));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<?> getOrderById(@PathVariable String orderId) {
+        Optional<Order> orderOpt = orderService.getOrderByOrderId(orderId);
+        if (orderOpt.isPresent()) {
+            return ResponseEntity.ok(orderOpt.get());
+        }
+        return ResponseEntity.status(404).body(new ApiResponseDto<>(false, "Order not found", "ORDER_NOT_FOUND"));
+    }
+
+    @PutMapping("/{orderId}/status")
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<?> updateStatus(
+            @PathVariable String orderId,
+            @RequestBody com.sreviaherbs.dto.StatusUpdateDto payload) {
+        try {
+            String targetStatus = payload.getStatus();
+            if (targetStatus == null || targetStatus.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, "Status is required"));
+            }
+            Optional<Order> updated = orderService.updateOrderStatus(
+                    orderId,
+                    targetStatus,
+                    payload.getTrackingNumber(),
+                    payload.getCourier(),
+                    payload.getMessage(),
+                    payload.getChangedBy() != null ? payload.getChangedBy() : "ADMIN"
+            );
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(updated.get());
+            }
+            return ResponseEntity.status(404).body(new ApiResponseDto<>(false, "Order not found"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), "INVALID_TRANSITION"));
+        }
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(
+            @PathVariable String orderId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        try {
+            String reason = body != null ? body.get("reason") : "Order cancelled by customer";
+            String changedBy = body != null && body.get("changedBy") != null ? body.get("changedBy") : "CUSTOMER";
+            Optional<Order> updated = orderService.cancelOrder(orderId, reason, changedBy);
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(updated.get());
+            }
+            return ResponseEntity.status(404).body(new ApiResponseDto<>(false, "Order not found"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), "INVALID_TRANSITION"));
+        }
+    }
+
+    @PostMapping("/{orderId}/return")
+    public ResponseEntity<?> requestReturn(
+            @PathVariable String orderId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        try {
+            String reason = body != null ? body.get("reason") : "Return requested by customer";
+            String changedBy = body != null && body.get("changedBy") != null ? body.get("changedBy") : "CUSTOMER";
+            Optional<Order> updated = orderService.requestReturn(orderId, reason, changedBy);
+            if (updated.isPresent()) {
+                return ResponseEntity.ok(updated.get());
+            }
+            return ResponseEntity.status(404).body(new ApiResponseDto<>(false, "Order not found"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), "INVALID_TRANSITION"));
+        }
     }
 }
