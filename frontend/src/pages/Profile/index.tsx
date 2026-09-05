@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, LogOut, Package, ShieldCheck, ArrowRight, Clock, Truck, CheckCircle2 } from 'lucide-react';
+import { User, LogOut, Package, ShieldCheck, ArrowRight, Clock, Truck, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
 import { SEO } from '../../components/seo/SEO';
@@ -50,9 +50,41 @@ export const ProfilePage: React.FC = () => {
   }
 
   const userEmail = currentUser.email || '';
-  const userOrders = orders.filter(
-    (o) => o.customer.email.toLowerCase() === userEmail.toLowerCase() || isAdmin
-  );
+  const userOrders = orders.filter((o) => {
+    if (isAdmin) return true;
+    if (userEmail && o.customer?.email && o.customer.email.toLowerCase() === userEmail.toLowerCase()) return true;
+    const lastId = sessionStorage.getItem('last_order_id') || localStorage.getItem('last_order_id');
+    if (lastId && o.orderId.toUpperCase() === lastId.toUpperCase()) return true;
+    return false;
+  });
+
+  const getStageStepIndex = (status?: string): number => {
+    if (!status) return 0;
+    const s = status.toUpperCase();
+    if (s === 'DELIVERED') return 6;
+    if (s === 'OUT_FOR_DELIVERY') return 5;
+    if (s === 'SHIPPED' || s === 'SHIPPING') return 4;
+    if (s === 'PACKED') return 3;
+    if (s === 'PROCESSING') return 2;
+    if (s === 'CONFIRMED') return 1;
+    return 0;
+  };
+
+  const isExceptionState = (status?: string) => {
+    if (!status) return false;
+    const s = status.toUpperCase();
+    return ['CANCELLED', 'PAYMENT_FAILED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'].includes(s);
+  };
+
+  const STAGES_LIST = [
+    { label: 'Placed', icon: Clock },
+    { label: 'Confirmed', icon: ShieldCheck },
+    { label: 'Processing', icon: RefreshCw },
+    { label: 'Packed', icon: Package },
+    { label: 'Shipped', icon: Truck },
+    { label: 'Out for Delivery', icon: Truck },
+    { label: 'Delivered', icon: CheckCircle2 },
+  ];
 
   const renderStageBadge = (status: string) => {
     const s = (status || '').toUpperCase();
@@ -121,7 +153,7 @@ export const ProfilePage: React.FC = () => {
       case 'RETURN_REQUESTED':
       case 'RETURNED':
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
             Return In Progress
           </span>
         );
@@ -204,7 +236,7 @@ export const ProfilePage: React.FC = () => {
             <div>
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#B89B5E]">ADMIN PRIVILEGES ACTIVE</span>
               <h2 className="text-lg font-bold text-white">Kathirvelan Admin Control Center</h2>
-              <p className="text-xs text-[#FCFBF7]/80">Manage PUREWHITE soap availability, update pricing, and set 3-stage order tracking live.</p>
+              <p className="text-xs text-[#FCFBF7]/80">Manage PUREWHITE soap availability, update pricing, and set 7-stage order tracking live.</p>
             </div>
             <Link
               to="/admin/dashboard"
@@ -221,7 +253,7 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-[#F4F0E7] pb-4">
             <div>
               <h2 className="text-xl font-bold text-[#1F3D2E]">My Orders ({userOrders.length})</h2>
-              <p className="text-xs text-[#242824]/70">Track your PUREWHITE soap orders in real time.</p>
+              <p className="text-xs text-[#242824]/70">Track your PUREWHITE soap orders live across all 7 stages.</p>
             </div>
             <Link
               to="/track-order"
@@ -245,42 +277,103 @@ export const ProfilePage: React.FC = () => {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {userOrders.map((o) => (
-                <div key={o.orderId} className="border border-[#F4F0E7] rounded-2xl p-5 hover:border-[#315C45]/40 transition-colors space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4F0E7] pb-3">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#B89B5E]">ORDER ID</span>
-                      <h3 className="font-bold text-[#1F3D2E] text-sm">#{o.orderId}</h3>
-                      <p className="text-[11px] text-[#242824]/60">Placed on {new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                    </div>
-                    <div>{renderStageBadge(o.orderStatus)}</div>
-                  </div>
+            <div className="space-y-6">
+              {userOrders.map((o) => {
+                const activeIdx = getStageStepIndex(o.orderStatus);
+                const isException = isExceptionState(o.orderStatus);
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <p className="text-[10px] font-bold text-[#A8B9A3] uppercase">Item</p>
-                      <p className="font-medium text-[#1F3D2E]">
-                        {o.items[0]?.productName || 'PUREWHITE Soap'} × {o.items[0]?.quantity || 1}
-                      </p>
+                return (
+                  <div key={o.orderId} className="border border-[#F4F0E7] rounded-2xl p-5 hover:border-[#315C45]/40 transition-colors space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F4F0E7] pb-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#B89B5E]">ORDER ID</span>
+                        <h3 className="font-bold text-[#1F3D2E] text-base">#{o.orderId}</h3>
+                        <p className="text-[11px] text-[#242824]/60">Placed on {new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      </div>
+                      <div>{renderStageBadge(o.orderStatus)}</div>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-[#A8B9A3] uppercase">Total Paid</p>
-                      <p className="font-bold text-[#1F3D2E]">₹{o.totalAmount}</p>
-                    </div>
-                  </div>
 
-                  <div className="pt-2 flex justify-end">
-                    <Link
-                      to={`/track-order/${o.orderId}`}
-                      className="bg-[#F4F0E7] hover:bg-[#315C45] hover:text-white text-[#1F3D2E] text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-xl transition-all flex items-center gap-1.5"
-                    >
-                      <Package className="w-3.5 h-3.5" />
-                      <span>Track Status</span>
-                    </Link>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <p className="text-[10px] font-bold text-[#A8B9A3] uppercase">Item Details</p>
+                        <p className="font-semibold text-[#1F3D2E]">
+                          {o.items[0]?.productName || 'PUREWHITE Soap'} × {o.items[0]?.quantity || 1}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-[#A8B9A3] uppercase">Total Paid</p>
+                        <p className="font-bold text-[#1F3D2E]">₹{o.totalAmount}</p>
+                      </div>
+                    </div>
+
+                    {/* Simultaneous 7-Stage Visual Linear Timeline Stepper Bar */}
+                    {!isException ? (
+                      <div className="pt-3 pb-2 border-t border-[#F4F0E7]">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[#1F3D2E] mb-3">
+                          <span className="uppercase tracking-wider text-[10px] text-[#B89B5E]">LIVE STAGE PROGRESS</span>
+                          <span className="text-[#315C45]">Stage {activeIdx + 1} of 7: {STAGES_LIST[activeIdx]?.label}</span>
+                        </div>
+
+                        <div className="relative flex items-center justify-between w-full my-4 px-2">
+                          {/* Background progress track line */}
+                          <div className="absolute top-1/2 left-4 right-4 h-1 bg-[#F4F0E7] -translate-y-1/2 rounded-full -z-0" />
+                          {/* Active filled progress line */}
+                          <div
+                            className="absolute top-1/2 left-4 h-1 bg-[#315C45] -translate-y-1/2 rounded-full transition-all duration-700 ease-in-out -z-0"
+                            style={{ width: `${(activeIdx / 6) * 100}%` }}
+                          />
+
+                          {/* 7 Stage Nodes */}
+                          {STAGES_LIST.map((stg, i) => {
+                            const IconComponent = stg.icon;
+                            const isCompleted = i < activeIdx;
+                            const isCurrent = i === activeIdx;
+
+                            return (
+                              <div key={stg.label} className="relative z-10 flex flex-col items-center group">
+                                <div
+                                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                                    isCompleted
+                                      ? 'bg-[#315C45] text-white shadow-sm'
+                                      : isCurrent
+                                      ? 'bg-[#1F3D2E] text-[#B89B5E] ring-4 ring-[#A8B9A3]/30 scale-110 shadow-md'
+                                      : 'bg-[#F4F0E7] text-[#242824]/40 border border-[#A8B9A3]/20'
+                                  }`}
+                                >
+                                  {isCompleted ? (
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  ) : (
+                                    <IconComponent className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  )}
+                                </div>
+                                <span className={`text-[9px] sm:text-[10px] font-semibold mt-2 text-center whitespace-nowrap ${
+                                  isCurrent ? 'text-[#1F3D2E] font-bold' : isCompleted ? 'text-[#315C45]' : 'text-[#242824]/40'
+                                }`}>
+                                  {stg.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs text-red-800 font-semibold flex items-center justify-between">
+                        <span>Notice: This order status is currently in <strong>{o.orderStatus.replace(/_/g, ' ')}</strong>.</span>
+                      </div>
+                    )}
+
+                    <div className="pt-2 flex justify-end">
+                      <Link
+                        to={`/track-order/${o.orderId}`}
+                        className="bg-[#1F3D2E] hover:bg-[#315C45] text-white text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Package className="w-3.5 h-3.5 text-[#B89B5E]" />
+                        <span>Full Track View</span>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
