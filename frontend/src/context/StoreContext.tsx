@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, collection } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { DEFAULT_PRODUCT, api } from '../services/api';
-import type { Product, Order } from '../types';
+import type { Product, Order, OrderStatus } from '../types';
 
 export type Stage3Status = 'ORDER_RECEIVED' | 'SHIPPING' | 'DELIVERED';
 
@@ -14,7 +14,7 @@ interface StoreContextType {
   originalPrice: number;
   updateProduct: (newPrice: number, newOriginalPrice: number, stockAvailable: boolean) => void;
   orders: Order[];
-  updateOrderStatus: (orderId: string, stage: Stage3Status) => Promise<void>;
+  updateOrderStatus: (orderId: string, stage: OrderStatus | string) => Promise<void>;
   addNewOrder: (order: Order) => void;
   refreshOrders: () => Promise<void>;
 }
@@ -87,7 +87,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         deliveryCharge: 49,
         totalAmount: 129,
         payment: { method: 'UPI_QR', status: 'VERIFIED', utr: 'UPI2026090390251' },
-        orderStatus: 'ORDER_RECEIVED',
+        orderStatus: 'CONFIRMED',
         googleSheetsSynced: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -95,12 +95,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
   });
 
-  // 1. Cross-Tab & Broadcast Channel Real-Time Sync
+  // 1. Cross-Tab & Broadcast Channel Real-Time Sync for Product & Orders
   useEffect(() => {
-    let channel: BroadcastChannel | null = null;
+    let productChannel: BroadcastChannel | null = null;
+    let ordersChannel: BroadcastChannel | null = null;
     try {
-      channel = new BroadcastChannel('srevia_store_channel');
-      channel.onmessage = (e) => {
+      productChannel = new BroadcastChannel('srevia_store_channel');
+      productChannel.onmessage = (e) => {
         if (e.data && e.data.product) {
           const p = e.data.product;
           const isAvail = checkStockAvailable(p);
@@ -111,6 +112,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             active: isAvail,
             stockQuantity: isAvail ? (p.stockQuantity || 100) : 0,
           }));
+        }
+      };
+
+      ordersChannel = new BroadcastChannel('srevia_orders_channel');
+      ordersChannel.onmessage = (e) => {
+        if (e.data && e.data.orderId && e.data.orderStatus) {
+          const { orderId, orderStatus } = e.data;
+          setOrders((prevOrders) =>
+            prevOrders.map((o) =>
+              o.orderId.toLowerCase() === orderId.toLowerCase()
+                ? { ...o, orderStatus: orderStatus as OrderStatus, updatedAt: new Date().toISOString() }
+                : o
+            )
+          );
         }
       };
     } catch (err) {}
@@ -129,6 +144,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
 
+    const handleCustomOrderChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.orderId && detail.orderStatus) {
+        setOrders((prevOrders) =>
+          prevOrders.map((o) =>
+            o.orderId.toLowerCase() === detail.orderId.toLowerCase()
+              ? { ...o, orderStatus: detail.orderStatus as OrderStatus, updatedAt: new Date().toISOString() }
+              : o
+          )
+        );
+      }
+    };
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY_PRODUCT && e.newValue) {
         try {
@@ -143,24 +171,37 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }));
         } catch (err) {}
       }
+      if (e.key === STORAGE_KEY_ORDERS && e.newValue) {
+        try {
+          const parsedOrders = JSON.parse(e.newValue);
+          if (Array.isArray(parsedOrders)) {
+            setOrders(parsedOrders);
+          }
+        } catch (err) {}
+      }
     };
 
     window.addEventListener('srevia_stock_change', handleCustomStockChange);
+    window.addEventListener('srevia_order_change', handleCustomOrderChange);
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
-      if (channel) channel.close();
+      if (productChannel) productChannel.close();
+      if (ordersChannel) ordersChannel.close();
       window.removeEventListener('srevia_stock_change', handleCustomStockChange);
+      window.removeEventListener('srevia_order_change', handleCustomOrderChange);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
-  // 2. Firebase Firestore Real-Time Listener
+  // 2. Firebase Firestore Real-Time Listener for Product & Orders
   useEffect(() => {
-    let unsubscribe = () => {};
+    let unsubProduct = () => {};
+    let unsubOrders = () => {};
+
     try {
       const productRef = doc(db, 'store', 'product');
-      unsubscribe = onSnapshot(
+      unsubProduct = onSnapshot(
         productRef,
         (snapshot) => {
           if (snapshot.exists()) {
@@ -176,18 +217,46 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }));
           }
         },
-        (error) => {
-          console.warn("Firestore snapshot notice:", error);
-        }
+        (error) => console.warn("Firestore product snapshot notice:", error)
+      );
+
+      const ordersRef = collection(db, 'orders');
+      unsubOrders = onSnapshot(
+        ordersRef,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            snapshot.docChanges().forEach((change) => {
+              const data = change.doc.data() as Partial<Order>;
+              if (data.orderId && data.orderStatus) {
+                setOrders((prevOrders) => {
+                  const exists = prevOrders.some((o) => o.orderId.toLowerCase() === data.orderId!.toLowerCase());
+                  if (exists) {
+                    return prevOrders.map((o) =>
+                      o.orderId.toLowerCase() === data.orderId!.toLowerCase()
+                        ? { ...o, ...data } as Order
+                        : o
+                    );
+                  } else {
+                    return [data as Order, ...prevOrders];
+                  }
+                });
+              }
+            });
+          }
+        },
+        (error) => console.warn("Firestore orders snapshot notice:", error)
       );
     } catch (e) {
       console.warn("Firestore setup notice:", e);
     }
 
-    return () => unsubscribe();
+    return () => {
+      unsubProduct();
+      unsubOrders();
+    };
   }, []);
 
-  // 3. Fast Persistent Backend Polling (2-Second Polling for instantaneous sync across devices)
+  // 3. Fast Persistent Backend Polling
   useEffect(() => {
     const fetchLatestProduct = () => {
       fetch(RENDER_BACKEND_PRODUCTS_URL)
@@ -234,11 +303,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [orders]);
 
-  const broadcastChange = (updated: Partial<Product>) => {
+  const broadcastProductChange = (updated: Partial<Product>) => {
     try {
       window.dispatchEvent(new CustomEvent('srevia_stock_change', { detail: updated }));
       const channel = new BroadcastChannel('srevia_store_channel');
       channel.postMessage({ product: updated });
+      channel.close();
+    } catch (e) {}
+  };
+
+  const broadcastOrderChange = (orderId: string, orderStatus: string) => {
+    try {
+      window.dispatchEvent(new CustomEvent('srevia_order_change', { detail: { orderId, orderStatus } }));
+      const channel = new BroadcastChannel('srevia_orders_channel');
+      channel.postMessage({ orderId, orderStatus });
       channel.close();
     } catch (e) {}
   };
@@ -256,9 +334,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
-    broadcastChange(payload);
+    broadcastProductChange(payload);
 
-    // A. Sync directly to Render Backend MongoDB
     try {
       await fetch(RENDER_BACKEND_STATUS_URL, {
         method: 'POST',
@@ -269,7 +346,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.warn("Render backend status POST notice:", e);
     }
 
-    // B. Sync to Vercel Serverless Handler (if deployed on Vercel)
     try {
       await fetch('/api/product', {
         method: 'POST',
@@ -278,7 +354,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
     } catch (e) {}
 
-    // C. Sync to Firebase Firestore
     try {
       await setDoc(doc(db, 'store', 'product'), payload);
     } catch (e) {
@@ -311,14 +386,17 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     syncProductToBackend(stockAvailable, newPrice, newOriginalPrice);
   };
 
-  const updateOrderStatus = async (orderId: string, stage: Stage3Status) => {
+  const updateOrderStatus = async (orderId: string, stage: OrderStatus | string) => {
     setOrders((prevOrders) =>
       prevOrders.map((o) =>
         o.orderId.toLowerCase() === orderId.toLowerCase()
-          ? { ...o, orderStatus: stage as any, updatedAt: new Date().toISOString() }
+          ? { ...o, orderStatus: stage as OrderStatus, updatedAt: new Date().toISOString() }
           : o
       )
     );
+
+    // Instant local & cross-tab broadcast
+    broadcastOrderChange(orderId, stage);
 
     // Sync to Firebase Firestore order status
     try {
@@ -341,6 +419,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const addNewOrder = (newOrder: Order) => {
     setOrders((prev) => [newOrder, ...prev]);
+    broadcastOrderChange(newOrder.orderId, newOrder.orderStatus);
     try {
       setDoc(doc(db, 'orders', newOrder.orderId.toUpperCase()), newOrder);
     } catch (e) {

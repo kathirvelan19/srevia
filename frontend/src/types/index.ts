@@ -57,16 +57,24 @@ export type PaymentMethod = 'RAZORPAY' | 'UPI_QR';
 export type PaymentStatus = 'PENDING' | 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
 
 export type OrderStatus =
+  | 'PLACED'
+  | 'ORDER_PLACED'
   | 'ORDER_RECEIVED'
   | 'PAYMENT_PENDING'
   | 'PAYMENT_SUBMITTED'
+  | 'SUBMITTED'
   | 'CONFIRMED'
   | 'PROCESSING'
   | 'PACKED'
   | 'SHIPPING'
   | 'SHIPPED'
+  | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'PAYMENT_FAILED'
+  | 'RETURN_REQUESTED'
+  | 'RETURNED'
+  | 'REFUNDED';
 
 export interface OrderPaymentInfo {
   method: PaymentMethod;

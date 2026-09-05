@@ -117,19 +117,33 @@ export const AdminOrdersPage: React.FC = () => {
             />
           </div>
 
-          <div className="sm:col-span-6 flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="sm:col-span-6 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
             <Filter className="w-4 h-4 text-[#B89B5E] shrink-0" />
-            {['ALL', 'SUBMITTED', 'VERIFIED', 'CONFIRMED', 'PROCESSING', 'PACKED', 'SHIPPED', 'DELIVERED', 'REJECTED'].map((filter) => (
+            {[
+              'ALL',
+              'PLACED',
+              'CONFIRMED',
+              'PROCESSING',
+              'PACKED',
+              'SHIPPED',
+              'OUT_FOR_DELIVERY',
+              'DELIVERED',
+              'CANCELLED',
+              'PAYMENT_FAILED',
+              'RETURN_REQUESTED',
+              'RETURNED',
+              'REFUNDED'
+            ].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
-                className={`text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-full whitespace-nowrap transition-colors ${
+                className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full whitespace-nowrap transition-colors ${
                   statusFilter === filter
                     ? 'bg-[#1F3D2E] text-white shadow-sm'
                     : 'bg-[#F4F0E7] text-[#242824]/70 hover:bg-[#A8B9A3]/30'
                 }`}
               >
-                {filter}
+                {filter.replace(/_/g, ' ')}
               </button>
             ))}
           </div>
@@ -174,7 +188,16 @@ export const AdminOrdersPage: React.FC = () => {
                         {o.payment.status}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-semibold text-[#1F3D2E]">{o.orderStatus}</td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        o.orderStatus === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' :
+                        o.orderStatus === 'CANCELLED' || o.orderStatus === 'PAYMENT_FAILED' || o.orderStatus === 'REFUNDED' ? 'bg-red-100 text-red-800' :
+                        o.orderStatus === 'RETURN_REQUESTED' || o.orderStatus === 'RETURNED' ? 'bg-purple-100 text-purple-800' :
+                        'bg-amber-100 text-amber-800'
+                      }`}>
+                        {o.orderStatus.replace(/_/g, ' ')}
+                      </span>
+                    </td>
                     <td className="py-3 px-3 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); setSelectedOrder(o); }}
@@ -242,23 +265,63 @@ export const AdminOrdersPage: React.FC = () => {
               </div>
 
               {/* Order Status Transition Controls */}
-              <div className="space-y-2 pt-2 border-t border-[#F4F0E7]">
-                <h4 className="font-bold text-[#1F3D2E] text-xs uppercase tracking-wider">Update Order Lifecycle Status:</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {['CONFIRMED', 'PROCESSING', 'PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((st) => (
-                    <button
-                      key={st}
-                      onClick={() => handleStatusChange(selectedOrder.orderId, st)}
-                      disabled={selectedOrder.orderStatus === st}
-                      className={`text-[10px] font-bold uppercase tracking-wider py-2 px-3 rounded-xl border transition-colors ${
-                        selectedOrder.orderStatus === st
-                          ? 'bg-[#1F3D2E] text-white border-[#1F3D2E]'
-                          : 'bg-[#FCFBF7] text-[#1F3D2E] border-[#A8B9A3]/40 hover:bg-[#F4F0E7]'
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
+              <div className="space-y-3 pt-2 border-t border-[#F4F0E7]">
+                <h4 className="font-bold text-[#1F3D2E] text-xs uppercase tracking-wider">Update Order Lifecycle Stage:</h4>
+                
+                {/* Linear Stages */}
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-[#B89B5E] uppercase tracking-wider">Linear Progress Stages</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      'PLACED',
+                      'CONFIRMED',
+                      'PROCESSING',
+                      'PACKED',
+                      'SHIPPED',
+                      'OUT_FOR_DELIVERY',
+                      'DELIVERED'
+                    ].map((st) => (
+                      <button
+                        key={st}
+                        onClick={() => handleStatusChange(selectedOrder.orderId, st)}
+                        disabled={selectedOrder.orderStatus === st}
+                        className={`text-[10px] font-bold uppercase tracking-wider py-2 px-2.5 rounded-xl border transition-colors ${
+                          selectedOrder.orderStatus === st
+                            ? 'bg-[#1F3D2E] text-white border-[#1F3D2E] shadow-sm'
+                            : 'bg-[#FCFBF7] text-[#1F3D2E] border-[#A8B9A3]/40 hover:bg-[#F4F0E7]'
+                        }`}
+                      >
+                        {st.replace(/_/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Exception States */}
+                <div className="space-y-1 pt-1">
+                  <span className="text-[10px] font-bold text-red-700 uppercase tracking-wider">Exception / Return States</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      'CANCELLED',
+                      'PAYMENT_FAILED',
+                      'RETURN_REQUESTED',
+                      'RETURNED',
+                      'REFUNDED'
+                    ].map((st) => (
+                      <button
+                        key={st}
+                        onClick={() => handleStatusChange(selectedOrder.orderId, st)}
+                        disabled={selectedOrder.orderStatus === st}
+                        className={`text-[10px] font-bold uppercase tracking-wider py-2 px-2.5 rounded-xl border transition-colors ${
+                          selectedOrder.orderStatus === st
+                            ? 'bg-red-800 text-white border-red-800 shadow-sm'
+                            : 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100'
+                        }`}
+                      >
+                        {st.replace(/_/g, ' ')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

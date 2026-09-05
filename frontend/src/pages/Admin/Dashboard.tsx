@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Clock, CheckCircle2, RefreshCw, LogOut, ShieldCheck, Tag, X, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useStore } from '../../context/StoreContext';
-import type { Stage3Status } from '../../context/StoreContext';
 
 export const AdminDashboardPage: React.FC = () => {
   const { currentUser, isAdmin, logout, signInWithGoogle } = useAuth();
@@ -69,8 +68,9 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const totalOrders = orders.length;
-  const orderReceivedCount = orders.filter((o) => !o.orderStatus || (o.orderStatus as string) === 'ORDER_RECEIVED' || o.orderStatus === 'CONFIRMED' || o.orderStatus === 'PAYMENT_SUBMITTED').length;
-  const shippingCount = orders.filter((o) => (o.orderStatus as string) === 'SHIPPING' || o.orderStatus === 'SHIPPED' || o.orderStatus === 'PROCESSING').length;
+  const placedCount = orders.filter((o) => o.orderStatus === 'PLACED' || o.orderStatus === 'SUBMITTED' || (o.orderStatus as string) === 'ORDER_RECEIVED').length;
+  const processingCount = orders.filter((o) => o.orderStatus === 'CONFIRMED' || o.orderStatus === 'PROCESSING' || o.orderStatus === 'PACKED').length;
+  const shippingCount = orders.filter((o) => o.orderStatus === 'SHIPPED' || o.orderStatus === 'OUT_FOR_DELIVERY' || (o.orderStatus as string) === 'SHIPPING').length;
   const deliveredCount = orders.filter((o) => o.orderStatus === 'DELIVERED').length;
 
   return (
@@ -220,55 +220,72 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Analytics Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white p-6 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#F4F0E7] text-[#1F3D2E] flex items-center justify-center">
-              <ShoppingBag className="w-6 h-6 text-[#315C45]" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-white p-5 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-[#F4F0E7] text-[#1F3D2E] flex items-center justify-center shrink-0">
+              <ShoppingBag className="w-5 h-5 text-[#315C45]" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#A8B9A3]">Total Orders</p>
-              <h3 className="text-2xl font-bold text-[#1F3D2E]">{totalOrders}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8B9A3]">Total Orders</p>
+              <h3 className="text-xl font-bold text-[#1F3D2E]">{totalOrders}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Clock className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#A8B9A3]">1. Order Received</p>
-              <h3 className="text-2xl font-bold text-amber-800">{orderReceivedCount}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8B9A3]">1. Placed</p>
+              <h3 className="text-xl font-bold text-amber-800">{placedCount}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
-              <Truck className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+              <Clock className="w-5 h-5 text-indigo-700" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#A8B9A3]">2. Shipping</p>
-              <h3 className="text-2xl font-bold text-blue-800">{shippingCount}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8B9A3]">2. Processing</p>
+              <h3 className="text-xl font-bold text-indigo-800">{processingCount}</h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6" />
+          <div className="bg-white p-5 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+              <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-[#A8B9A3]">3. Delivered</p>
-              <h3 className="text-2xl font-bold text-emerald-800">{deliveredCount}</h3>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8B9A3]">3. Shipping</p>
+              <h3 className="text-xl font-bold text-blue-800">{shippingCount}</h3>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-3xl border border-[#A8B9A3]/30 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#A8B9A3]">4. Delivered</p>
+              <h3 className="text-xl font-bold text-emerald-800">{deliveredCount}</h3>
             </div>
           </div>
         </div>
 
-        {/* 2. 3-STAGE ORDER TRACKING CONTROLLER */}
+        {/* 2. ORDER LIFECYCLE MANAGEMENT SYSTEM CONTROLLER */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#A8B9A3]/30 shadow-herbal space-y-6">
-          <div className="flex items-center justify-between border-b border-[#F4F0E7] pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#F4F0E7] pb-4 gap-4">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#B89B5E]">3-STAGE TRACKING CONTROLLER</span>
-              <h2 className="text-xl font-bold text-[#1F3D2E]">Customer Orders & Live Stage Status ({orders.length})</h2>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#B89B5E]">REAL-TIME ORDER LIFECYCLE CONTROLLER</span>
+              <h2 className="text-xl font-bold text-[#1F3D2E]">Manage Order Stages ({orders.length})</h2>
             </div>
+            
+            <button
+              onClick={() => navigate('/admin/orders')}
+              className="text-xs font-bold text-[#315C45] hover:underline"
+            >
+              View Full Order Management Table →
+            </button>
           </div>
 
           {orders.length === 0 ? (
@@ -278,13 +295,6 @@ export const AdminDashboardPage: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {orders.map((o) => {
-                const currentStage: Stage3Status =
-                  o.orderStatus === 'DELIVERED'
-                    ? 'DELIVERED'
-                    : (o.orderStatus as string) === 'SHIPPING' || o.orderStatus === 'SHIPPED'
-                    ? 'SHIPPING'
-                    : 'ORDER_RECEIVED';
-
                 return (
                   <div key={o.orderId} className="border border-[#F4F0E7] rounded-2xl p-5 hover:border-[#315C45]/40 transition-colors space-y-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -292,51 +302,45 @@ export const AdminDashboardPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-[#1F3D2E] text-base">#{o.orderId}</span>
                           <span className="text-xs text-[#242824]/60">• {o.customer.name} ({o.customer.phone})</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            o.orderStatus === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' :
+                            o.orderStatus === 'CANCELLED' || o.orderStatus === 'PAYMENT_FAILED' || o.orderStatus === 'REFUNDED' ? 'bg-red-100 text-red-800' :
+                            o.orderStatus === 'RETURN_REQUESTED' || o.orderStatus === 'RETURNED' ? 'bg-purple-100 text-purple-800' :
+                            'bg-amber-100 text-amber-800'
+                          }`}>
+                            {o.orderStatus ? o.orderStatus.replace(/_/g, ' ') : 'PLACED'}
+                          </span>
                         </div>
                         <p className="text-xs text-[#242824]/70 mt-0.5">
-                          Amount: <strong className="text-[#1F3D2E]">₹{o.totalAmount}</strong> | Address: {o.customer.address.city}, {o.customer.address.state}
+                          Amount: <strong className="text-[#1F3D2E]">₹{o.totalAmount}</strong> | Payment: <strong className="text-[#315C45]">{o.payment?.status || 'SUBMITTED'}</strong> | Address: {o.customer.address.city}, {o.customer.address.state}
                         </p>
                       </div>
 
-                      {/* 3-Stage Buttons */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#242824]/70 mr-1">Admin Set Stage:</span>
-                        
-                        {/* Stage 1: Order Received */}
-                        <button
-                          onClick={() => updateOrderStatus(o.orderId, 'ORDER_RECEIVED')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                            currentStage === 'ORDER_RECEIVED'
-                              ? 'bg-amber-600 text-white shadow-md'
-                              : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-                          }`}
+                      {/* Dropdown & Quick Stage Selection */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-[#242824]/70">Change Stage:</span>
+                        <select
+                          value={o.orderStatus || 'PLACED'}
+                          onChange={(e) => updateOrderStatus(o.orderId, e.target.value as any)}
+                          className="bg-[#FCFBF7] border border-[#315C45]/40 text-[#1F3D2E] text-xs font-bold rounded-xl px-3 py-2 focus:outline-none"
                         >
-                          1. Order Received
-                        </button>
-
-                        {/* Stage 2: Shipping */}
-                        <button
-                          onClick={() => updateOrderStatus(o.orderId, 'SHIPPING')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                            currentStage === 'SHIPPING'
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
-                          }`}
-                        >
-                          2. Shipping
-                        </button>
-
-                        {/* Stage 3: Delivered */}
-                        <button
-                          onClick={() => updateOrderStatus(o.orderId, 'DELIVERED')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                            currentStage === 'DELIVERED'
-                              ? 'bg-emerald-600 text-white shadow-md'
-                              : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-                          }`}
-                        >
-                          3. Delivered
-                        </button>
+                          <optgroup label="Linear Lifecycle Stages">
+                            <option value="PLACED">1. Placed</option>
+                            <option value="CONFIRMED">2. Confirmed</option>
+                            <option value="PROCESSING">3. Processing</option>
+                            <option value="PACKED">4. Packed</option>
+                            <option value="SHIPPED">5. Shipped</option>
+                            <option value="OUT_FOR_DELIVERY">6. Out for Delivery</option>
+                            <option value="DELIVERED">7. Delivered</option>
+                          </optgroup>
+                          <optgroup label="Exception States">
+                            <option value="CANCELLED">Cancelled</option>
+                            <option value="PAYMENT_FAILED">Payment Failed</option>
+                            <option value="RETURN_REQUESTED">Return Requested</option>
+                            <option value="RETURNED">Returned</option>
+                            <option value="REFUNDED">Refunded</option>
+                          </optgroup>
+                        </select>
                       </div>
                     </div>
                   </div>
