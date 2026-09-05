@@ -275,6 +275,87 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, []);
 
+  // 4. Instant Supabase PostgreSQL Realtime Orders Subscription
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    try {
+      const channel = supabase
+        .channel('realtime:orders')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'orders' },
+          (payload) => {
+            if (payload.new) {
+              const raw = payload.new as any;
+              const targetOrderId = (raw.order_id || raw.orderId || '').toLowerCase().trim();
+              const targetStatus = raw.order_status || raw.orderStatus;
+              const courier = raw.courier;
+              const trackingNumber = raw.tracking_number || raw.trackingNumber;
+
+              let parsedHistory = [];
+              if (raw.status_history) {
+                try {
+                  parsedHistory = typeof raw.status_history === 'string' ? JSON.parse(raw.status_history) : raw.status_history;
+                } catch (e) {}
+              } else if (raw.statusHistory) {
+                try {
+                  parsedHistory = typeof raw.statusHistory === 'string' ? JSON.parse(raw.statusHistory) : raw.statusHistory;
+                } catch (e) {}
+              }
+
+              if (targetOrderId && targetStatus) {
+                setOrders((prevOrders) => {
+                  const exists = prevOrders.some((o) => o.orderId.toLowerCase().trim() === targetOrderId);
+                  if (exists) {
+                    return prevOrders.map((o) => {
+                      if (o.orderId.toLowerCase().trim() === targetOrderId) {
+                        return {
+                          ...o,
+                          orderStatus: targetStatus as OrderStatus,
+                          courier: courier || o.courier,
+                          trackingNumber: trackingNumber || o.trackingNumber,
+                          statusHistory: parsedHistory.length > 0 ? parsedHistory : o.statusHistory,
+                          updatedAt: raw.updated_at || new Date().toISOString(),
+                        };
+                      }
+                      return o;
+                    });
+                  } else {
+                    const newOrder: Order = {
+                      id: raw.id,
+                      orderId: raw.order_id || raw.orderId,
+                      userId: raw.user_id || raw.userId,
+                      customer: typeof raw.customer === 'string' ? JSON.parse(raw.customer) : raw.customer,
+                      items: typeof raw.items === 'string' ? JSON.parse(raw.items) : raw.items,
+                      subtotal: raw.subtotal || 0,
+                      deliveryCharge: raw.delivery_charge || raw.deliveryCharge || 0,
+                      totalAmount: raw.total_amount || raw.totalAmount || 0,
+                      payment: typeof raw.payment === 'string' ? JSON.parse(raw.payment) : raw.payment,
+                      orderStatus: targetStatus,
+                      courier: courier,
+                      trackingNumber: trackingNumber,
+                      statusHistory: parsedHistory,
+                      createdAt: raw.created_at || new Date().toISOString(),
+                      updatedAt: raw.updated_at || new Date().toISOString(),
+                    };
+                    return [newOrder, ...prevOrders];
+                  }
+                });
+              }
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (e) {
+      console.warn("Supabase Realtime orders channel notice:", e);
+    }
+  }, []);
+
   const inStock = checkStockAvailable(product);
   const price = product.price;
   const originalPrice = product.originalPrice;
