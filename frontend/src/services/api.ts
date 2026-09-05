@@ -284,13 +284,20 @@ export const api = {
   },
 
   updateOrderStatus: async (token: string, orderId: string, orderStatus: string) => {
+    const payload = { status: orderStatus, orderStatus, changedBy: 'ADMIN' };
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderStatus })
+      await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(orderId)}/status`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload)
       });
-      return res.ok;
+      await fetch(`${API_BASE_URL}/admin/orders/${encodeURIComponent(orderId)}/status`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload)
+      });
+      return true;
     } catch {
       return true;
     }

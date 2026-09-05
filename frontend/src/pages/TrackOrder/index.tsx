@@ -59,15 +59,52 @@ export const TrackOrderPage: React.FC = () => {
     }
   }, [searchParams, pathOrderId, orders]);
 
-  // Real-time simultaneous update listener for active tracked order
+  // Real-time simultaneous update listener & fast polling for active tracked order
   useEffect(() => {
-    if (trackedOrder) {
-      const live = orders.find((o) => o.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase());
-      if (live && live.orderStatus !== trackedOrder.orderStatus) {
-        setTrackedOrder(live);
-      }
+    if (!trackedOrder) return;
+
+    // 1. Sync from StoreContext orders array
+    const liveFromStore = orders.find((o) => o.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase());
+    if (liveFromStore && (liveFromStore.orderStatus !== trackedOrder.orderStatus || liveFromStore.trackingNumber !== trackedOrder.trackingNumber)) {
+      setTrackedOrder(liveFromStore);
     }
-  }, [orders, trackedOrder]);
+
+    // 2. Cross-tab BroadcastChannel & CustomEvent listeners
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('srevia_orders_channel');
+      channel.onmessage = (e) => {
+        if (e.data && e.data.orderId && e.data.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase()) {
+          const newStatus = e.data.orderStatus;
+          setTrackedOrder((prev) => prev ? { ...prev, orderStatus: newStatus as any } : null);
+        }
+      };
+    } catch (e) {}
+
+    const handleCustomOrderChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail && detail.orderId && detail.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase()) {
+        setTrackedOrder((prev) => prev ? { ...prev, orderStatus: detail.orderStatus as any } : null);
+      }
+    };
+    window.addEventListener('srevia_order_change', handleCustomOrderChange);
+
+    // 3. Fast 2.5-second live backend re-fetch to capture API updates immediately
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await api.trackOrder(trackedOrder.orderId, phoneInput);
+        if (fresh && (fresh.orderStatus !== trackedOrder.orderStatus || fresh.trackingNumber !== trackedOrder.trackingNumber)) {
+          setTrackedOrder(fresh);
+        }
+      } catch (err) {}
+    }, 2500);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('srevia_order_change', handleCustomOrderChange);
+      clearInterval(interval);
+    };
+  }, [orders, trackedOrder, phoneInput]);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
