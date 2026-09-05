@@ -24,6 +24,14 @@ const STORAGE_KEY_ORDERS = 'srevia_store_orders';
 const RENDER_BACKEND_PRODUCTS_URL = 'https://sreviia-backend.onrender.com/api/products';
 const RENDER_BACKEND_STATUS_URL = 'https://sreviia-backend.onrender.com/api/products/status';
 
+const checkStockAvailable = (p: any): boolean => {
+  if (!p) return true;
+  if (p.inStock === false) return false;
+  if (p.active === false) return false;
+  if (typeof p.stockQuantity === 'number' && p.stockQuantity <= 0) return false;
+  return true;
+};
+
 const StoreContext = createContext<StoreContextType>({
   product: DEFAULT_PRODUCT,
   inStock: true,
@@ -42,7 +50,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PRODUCT);
       if (saved) {
-        return { ...DEFAULT_PRODUCT, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        const isAvail = checkStockAvailable(parsed);
+        return {
+          ...DEFAULT_PRODUCT,
+          ...parsed,
+          inStock: isAvail,
+          active: isAvail,
+          stockQuantity: isAvail ? (parsed.stockQuantity || 100) : 0,
+        };
       }
     } catch (e) {
       console.warn("Failed loading saved store product:", e);
@@ -79,7 +95,67 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
   });
 
-  // 1. Firebase Firestore Real-Time Listener
+  // 1. Cross-Tab & Broadcast Channel Real-Time Sync
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('srevia_store_channel');
+      channel.onmessage = (e) => {
+        if (e.data && e.data.product) {
+          const p = e.data.product;
+          const isAvail = checkStockAvailable(p);
+          setProduct((prev) => ({
+            ...prev,
+            ...p,
+            inStock: isAvail,
+            active: isAvail,
+            stockQuantity: isAvail ? (p.stockQuantity || 100) : 0,
+          }));
+        }
+      };
+    } catch (err) {}
+
+    const handleCustomStockChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        const isAvail = checkStockAvailable(detail);
+        setProduct((prev) => ({
+          ...prev,
+          ...detail,
+          inStock: isAvail,
+          active: isAvail,
+          stockQuantity: isAvail ? (detail.stockQuantity || 100) : 0,
+        }));
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_PRODUCT && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          const isAvail = checkStockAvailable(parsed);
+          setProduct((prev) => ({
+            ...prev,
+            ...parsed,
+            inStock: isAvail,
+            active: isAvail,
+            stockQuantity: isAvail ? (parsed.stockQuantity || 100) : 0,
+          }));
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('srevia_stock_change', handleCustomStockChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('srevia_stock_change', handleCustomStockChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // 2. Firebase Firestore Real-Time Listener
   useEffect(() => {
     let unsubscribe = () => {};
     try {
@@ -89,10 +165,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
+            const isAvail = checkStockAvailable(data);
             setProduct((prev) => ({
               ...prev,
-              stockQuantity: data.inStock ? (data.stockQuantity || 100) : 0,
-              active: data.inStock !== false,
+              inStock: isAvail,
+              active: isAvail,
+              stockQuantity: isAvail ? (data.stockQuantity || 100) : 0,
               price: typeof data.price === 'number' ? data.price : prev.price,
               originalPrice: typeof data.originalPrice === 'number' ? data.originalPrice : prev.originalPrice,
             }));
@@ -109,7 +187,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => unsubscribe();
   }, []);
 
-  // 2. Persistent Backend Polling (Directly from Render Backend MongoDB - Guaranteed 100% sync on all devices)
+  // 3. Fast Persistent Backend Polling (2-Second Polling for instantaneous sync across devices)
   useEffect(() => {
     const fetchLatestProduct = () => {
       fetch(RENDER_BACKEND_PRODUCTS_URL)
@@ -117,12 +195,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .then((products) => {
           if (Array.isArray(products) && products.length > 0) {
             const p = products[0];
-            const isAvailable = p.active !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
+            const isAvail = checkStockAvailable(p);
             setProduct((prev) => ({
               ...prev,
-              stockQuantity: isAvailable ? (p.stockQuantity || 100) : 0,
-              active: isAvailable,
+              inStock: isAvail,
+              active: isAvail,
+              stockQuantity: isAvail ? (p.stockQuantity !== undefined ? p.stockQuantity : 100) : 0,
               price: typeof p.price === 'number' ? p.price : prev.price,
+              originalPrice: typeof p.originalPrice === 'number' ? p.originalPrice : prev.originalPrice,
             }));
           }
         })
@@ -130,11 +210,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     fetchLatestProduct();
-    const interval = setInterval(fetchLatestProduct, 3000);
+    const interval = setInterval(fetchLatestProduct, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  const inStock = product.stockQuantity > 0 && product.active !== false;
+  const inStock = checkStockAvailable(product);
   const price = product.price;
   const originalPrice = product.originalPrice;
 
@@ -154,6 +234,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [orders]);
 
+  const broadcastChange = (updated: Partial<Product>) => {
+    try {
+      window.dispatchEvent(new CustomEvent('srevia_stock_change', { detail: updated }));
+      const channel = new BroadcastChannel('srevia_store_channel');
+      channel.postMessage({ product: updated });
+      channel.close();
+    } catch (e) {}
+  };
+
   const syncProductToBackend = async (stockAvailable: boolean, newPrice?: number, newOriginalPrice?: number) => {
     const p = newPrice !== undefined ? newPrice : price;
     const op = newOriginalPrice !== undefined ? newOriginalPrice : (originalPrice || 120);
@@ -167,21 +256,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
-    // A. Sync directly to Render Backend MongoDB (100% Persistent across all devices)
+    broadcastChange(payload);
+
+    // A. Sync directly to Render Backend MongoDB
     try {
       await fetch(RENDER_BACKEND_STATUS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inStock: stockAvailable,
-          price: p,
-        }),
+        body: JSON.stringify(payload),
       });
     } catch (e) {
       console.warn("Render backend status POST notice:", e);
     }
 
-    // B. Sync to Firebase Firestore
+    // B. Sync to Vercel Serverless Handler (if deployed on Vercel)
+    try {
+      await fetch('/api/product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {}
+
+    // C. Sync to Firebase Firestore
     try {
       await setDoc(doc(db, 'store', 'product'), payload);
     } catch (e) {
@@ -190,23 +287,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const setInStock = (stockAvailable: boolean) => {
-    setProduct((prev) => ({
-      ...prev,
-      stockQuantity: stockAvailable ? 100 : 0,
+    const updated = {
+      ...product,
+      inStock: stockAvailable,
       active: stockAvailable,
-    }));
+      stockQuantity: stockAvailable ? 100 : 0,
+    };
+    setProduct(updated);
     syncProductToBackend(stockAvailable);
   };
 
   const updateProduct = (newPrice: number, newOriginalPrice: number, stockAvailable: boolean) => {
-    setProduct((prev) => ({
-      ...prev,
+    const updated = {
+      ...product,
       price: newPrice,
       originalPrice: newOriginalPrice,
-      stockQuantity: stockAvailable ? 100 : 0,
+      inStock: stockAvailable,
       active: stockAvailable,
+      stockQuantity: stockAvailable ? 100 : 0,
       discount: newOriginalPrice > newPrice ? `Save ${Math.round(((newOriginalPrice - newPrice) / newOriginalPrice) * 100)}%` : '',
-    }));
+    };
+    setProduct(updated);
     syncProductToBackend(stockAvailable, newPrice, newOriginalPrice);
   };
 

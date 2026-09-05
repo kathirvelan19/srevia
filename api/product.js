@@ -62,9 +62,9 @@ export default async function handler(req, res) {
     if (backendRes.ok) {
       const products = await backendRes.json();
       if (Array.isArray(products) && products.length > 0) {
-        const p = products[0];
-        memoryState.inStock = p.active !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
-        memoryState.stockQuantity = p.stockQuantity !== undefined ? p.stockQuantity : (p.active ? 100 : 0);
+        const isAvail = p.inStock !== false && p.active !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
+        memoryState.inStock = isAvail;
+        memoryState.stockQuantity = isAvail ? (p.stockQuantity !== undefined ? p.stockQuantity : 100) : 0;
         memoryState.price = typeof p.price === 'number' ? p.price : memoryState.price;
       }
     }
