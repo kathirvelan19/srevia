@@ -2,7 +2,9 @@ package com.sreviaherbs.controller;
 
 import com.sreviaherbs.dto.ApiResponseDto;
 import com.sreviaherbs.model.Order;
+import com.sreviaherbs.model.Product;
 import com.sreviaherbs.service.OrderService;
+import com.sreviaherbs.service.ProductService;
 import com.sreviaherbs.service.RazorpayService;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,9 +30,34 @@ public class RazorpayController {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private ProductService productService;
+
     @PostMapping("/create-order")
     public ResponseEntity<Map<String, String>> createOrder(@RequestBody Map<String, Object> data) {
-        double amount = Double.parseDouble(data.get("amount").toString());
+        // Server-Side Stock & Price Validation
+        List<Product> products = productService.getAllProducts();
+        double activePrice = 80.0;
+        boolean isAvailable = true;
+
+        if (!products.isEmpty()) {
+            Product p = products.get(0);
+            activePrice = p.getPrice() > 0 ? p.getPrice() : 80.0;
+            isAvailable = p.isActive() && p.getStockQuantity() > 0;
+        }
+
+        if (!isAvailable) {
+            throw new IllegalStateException("PUREWHITE Soap is currently Out of Stock (Unavailable). New Razorpay payments paused.");
+        }
+
+        double amount = activePrice + (activePrice > 499.0 ? 0.0 : 49.0);
+        if (data.get("amount") != null) {
+            double reqAmount = Double.parseDouble(data.get("amount").toString());
+            if (reqAmount >= activePrice) {
+                amount = reqAmount;
+            }
+        }
+
         Map<String, String> orderResult = razorpayService.createOrder(amount);
         return ResponseEntity.ok(orderResult);
     }

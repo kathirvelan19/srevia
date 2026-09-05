@@ -1,6 +1,8 @@
 package com.sreviaherbs.service;
 
 import com.sreviaherbs.model.Order;
+import com.sreviaherbs.model.OrderItem;
+import com.sreviaherbs.model.Product;
 import com.sreviaherbs.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,20 +25,63 @@ public class OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private ProductService productService;
+
+    @Autowired
     private GoogleSheetsService googleSheetsService;
 
     @Autowired
     private OrderEmailService orderEmailService;
 
+    @Autowired
+    private AuditLogService auditLogService;
+
     public Order createOrder(Order order) {
-        // Generate unique order ID if not set
+        // 1. Server-Side Stock & Price Validation (Prevents Price/Stock Tampering)
+        List<Product> products = productService.getAllProducts();
+        double activePrice = 80.0; // Default fallback price
+        boolean isAvailable = true;
+
+        if (!products.isEmpty()) {
+            Product dbProduct = products.get(0);
+            activePrice = dbProduct.getPrice() > 0 ? dbProduct.getPrice() : 80.0;
+            isAvailable = dbProduct.isActive() && dbProduct.getStockQuantity() > 0;
+        }
+
+        if (!isAvailable) {
+            logger.warn("Order placement rejected: PUREWHITE Soap is out of stock.");
+            throw new IllegalStateException("PUREWHITE Soap is currently Out of Stock (Unavailable). New order placement is temporarily paused.");
+        }
+
+        // 2. Server-side Recalculation of Line Items & Totals
+        if (order.getItems() != null && !order.getItems().isEmpty()) {
+            double calculatedSubtotal = 0.0;
+            for (OrderItem item : order.getItems()) {
+                int qty = item.getQuantity() > 0 ? item.getQuantity() : 1;
+                item.setQuantity(qty);
+                item.setUnitPrice(activePrice);
+                double lineTotal = activePrice * qty;
+                item.setTotalPrice(lineTotal);
+                calculatedSubtotal += lineTotal;
+            }
+            order.setSubtotal(calculatedSubtotal);
+            double deliveryCharge = calculatedSubtotal > 499.0 ? 0.0 : 49.0;
+            order.setDeliveryCharge(deliveryCharge);
+            order.setTotalAmount(calculatedSubtotal + deliveryCharge);
+        } else {
+            order.setSubtotal(activePrice);
+            order.setDeliveryCharge(49.0);
+            order.setTotalAmount(activePrice + 49.0);
+        }
+
+        // 3. Generate unique order ID if not set
         if (order.getOrderId() == null || order.getOrderId().trim().isEmpty()) {
             order.setOrderId(generateUniqueOrderId());
         }
 
-        // Save order to MongoDB
+        // 4. Save order to MongoDB
         Order savedOrder = orderRepository.save(order);
-        logger.info("Order saved successfully in MongoDB with ID: {}", savedOrder.getOrderId());
+        logger.info("Order saved securely with server-calculated total ₹{} for Order ID: {}", savedOrder.getTotalAmount(), savedOrder.getOrderId());
 
         // Trigger confirmation email if payment is already VERIFIED or PAID
         if (savedOrder.getPayment() != null &&
@@ -104,6 +149,9 @@ public class OrderService {
             order.setUpdatedAt(Instant.now());
             Order updated = orderRepository.save(order);
 
+            // Audit Log Event
+            auditLogService.logAction("PAYMENT_VERIFICATION", "Kathirvelan Admin", "Order " + orderId + " payment status updated to " + status, "127.0.0.1");
+
             // Send Confirmation Email if verified/paid (idempotent)
             if ("VERIFIED".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
                 try {
@@ -136,6 +184,9 @@ public class OrderService {
             order.setOrderStatus(status);
             order.setUpdatedAt(Instant.now());
             Order saved = orderRepository.save(order);
+
+            // Audit Log Event
+            auditLogService.logAction("ORDER_STATUS_UPDATE", "Kathirvelan Admin", "Order " + orderId + " status updated to " + status, "127.0.0.1");
 
             // Send Order Status Update Email
             try {
