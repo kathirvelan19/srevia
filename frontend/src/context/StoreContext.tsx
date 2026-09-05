@@ -334,12 +334,19 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedAt: new Date().toISOString(),
     };
 
+    // Instant cross-tab and local window broadcast
     broadcastProductChange(payload);
+
+    const token = localStorage.getItem('srevia_admin_token') || 'mock-jwt-admin-token-srevia';
+    const authHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
 
     try {
       await fetch(RENDER_BACKEND_STATUS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify(payload),
       });
     } catch (e) {
@@ -349,13 +356,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       await fetch('/api/product', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify(payload),
       });
     } catch (e) {}
 
     try {
-      await setDoc(doc(db, 'store', 'product'), payload);
+      await setDoc(doc(db, 'store', 'product'), payload, { merge: true });
     } catch (e) {
       console.warn("Firestore setDoc notice:", e);
     }
@@ -369,6 +376,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       stockQuantity: stockAvailable ? 100 : 0,
     };
     setProduct(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY_PRODUCT, JSON.stringify(updated));
+    } catch (e) {}
     syncProductToBackend(stockAvailable);
   };
 
@@ -383,6 +393,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       discount: newOriginalPrice > newPrice ? `Save ${Math.round(((newOriginalPrice - newPrice) / newOriginalPrice) * 100)}%` : '',
     };
     setProduct(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY_PRODUCT, JSON.stringify(updated));
+    } catch (e) {}
     syncProductToBackend(stockAvailable, newPrice, newOriginalPrice);
   };
 
