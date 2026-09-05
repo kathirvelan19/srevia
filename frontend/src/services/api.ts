@@ -1,5 +1,6 @@
 import type { Product, Order, OrderStatus, ContactMessage } from '../types';
 import purewhiteSoapImg from '../assets/purewhite_soap_bar.jpg';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://sreviia-backend.onrender.com/api' : 'http://localhost:8080/api');
 
@@ -180,24 +181,84 @@ export const api = {
 
   // Track Order
   trackOrder: async (orderId: string, phone: string): Promise<Order | null> => {
+    if (!orderId) return null;
+    const cleanId = orderId.trim().toUpperCase();
+
+    // 1. Try Supabase DB first
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .or(`order_id.eq.${cleanId},orderId.eq.${cleanId}`)
+          .maybeSingle();
+
+        if (data && !error) {
+          let parsedCustomer = data.customer;
+          if (typeof parsedCustomer === 'string') {
+            try { parsedCustomer = JSON.parse(parsedCustomer); } catch (e) {}
+          }
+          let parsedItems = data.items;
+          if (typeof parsedItems === 'string') {
+            try { parsedItems = JSON.parse(parsedItems); } catch (e) {}
+          }
+          let parsedPayment = data.payment;
+          if (typeof parsedPayment === 'string') {
+            try { parsedPayment = JSON.parse(parsedPayment); } catch (e) {}
+          }
+          let parsedHistory = [];
+          if (data.status_history) {
+            parsedHistory = typeof data.status_history === 'string' ? JSON.parse(data.status_history) : data.status_history;
+          } else if (data.statusHistory) {
+            parsedHistory = typeof data.statusHistory === 'string' ? JSON.parse(data.statusHistory) : data.statusHistory;
+          }
+
+          return {
+            id: data.id,
+            orderId: data.order_id || data.orderId || cleanId,
+            userId: data.user_id || data.userId,
+            customer: parsedCustomer,
+            items: parsedItems,
+            subtotal: data.subtotal || 80,
+            deliveryCharge: data.delivery_charge || data.deliveryCharge || 49,
+            totalAmount: data.total_amount || data.totalAmount || 129,
+            payment: parsedPayment,
+            orderStatus: (data.order_status || data.orderStatus || 'CONFIRMED') as OrderStatus,
+            trackingNumber: data.tracking_number || data.trackingNumber,
+            courier: data.courier,
+            statusHistory: parsedHistory,
+            createdAt: data.created_at || data.createdAt || new Date().toISOString(),
+            updatedAt: data.updated_at || data.updatedAt || new Date().toISOString()
+          };
+        }
+      } catch (e) {
+        console.warn('Supabase track order notice:', e);
+      }
+    }
+
+    // 2. Try Backend API
     try {
-      const res = await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(orderId)}/track?phone=${encodeURIComponent(phone)}`);
+      const res = await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(cleanId)}/track?phone=${encodeURIComponent(phone)}`);
       if (res.ok) {
         return await res.json();
       }
-      return null;
-    } catch {
-      // Fallback local lookup
-      try {
-        const mockOrders: Order[] = JSON.parse(sessionStorage.getItem('mock_orders') || '[]');
-        const found = mockOrders.find(
-          (o) => o.orderId.toLowerCase() === orderId.toLowerCase() && o.customer.phone.includes(phone.slice(-4))
-        );
-        return found || null;
-      } catch {
-        return null;
-      }
+    } catch (e) {
+      console.warn('Backend order track endpoint notice:', e);
     }
+
+    // 3. Fallback to shared localStorage & sessionStorage
+    try {
+      const storedStr = localStorage.getItem('srevia_store_orders') || localStorage.getItem('mock_orders') || sessionStorage.getItem('mock_orders');
+      if (storedStr) {
+        const mockOrders: Order[] = JSON.parse(storedStr);
+        const found = mockOrders.find(
+          (o) => o.orderId.toUpperCase() === cleanId
+        );
+        if (found) return found;
+      }
+    } catch (e) {}
+
+    return null;
   },
 
   // Contact Form
@@ -239,40 +300,87 @@ export const api = {
   },
 
   getAdminOrders: async (token: string): Promise<Order[]> => {
+    // 1. Try Supabase DB
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+        if (data && !error && data.length > 0) {
+          return data.map((d: any) => ({
+            id: d.id,
+            orderId: d.order_id || d.orderId,
+            userId: d.user_id || d.userId,
+            customer: typeof d.customer === 'string' ? JSON.parse(d.customer) : d.customer,
+            items: typeof d.items === 'string' ? JSON.parse(d.items) : d.items,
+            subtotal: d.subtotal || 80,
+            deliveryCharge: d.delivery_charge || d.deliveryCharge || 49,
+            totalAmount: d.total_amount || d.totalAmount || 129,
+            payment: typeof d.payment === 'string' ? JSON.parse(d.payment) : d.payment,
+            orderStatus: (d.order_status || d.orderStatus || 'CONFIRMED') as OrderStatus,
+            trackingNumber: d.tracking_number || d.trackingNumber,
+            courier: d.courier,
+            statusHistory: d.status_history ? (typeof d.status_history === 'string' ? JSON.parse(d.status_history) : d.status_history) : [],
+            createdAt: d.created_at || d.createdAt || new Date().toISOString(),
+            updatedAt: d.updated_at || d.updatedAt || new Date().toISOString()
+          }));
+        }
+      } catch (e) {
+        console.warn('Supabase getAdminOrders notice:', e);
+      }
+    }
+
+    // 2. Try Backend API
     try {
       const res = await fetch(`${API_BASE_URL}/admin/orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) return await res.json();
-      return [];
-    } catch {
-      const localMock: Order[] = JSON.parse(sessionStorage.getItem('mock_orders') || '[]');
-      return localMock.length > 0 ? localMock : [
-        {
-          orderId: 'SRV-20260829-0001',
-          customer: {
-            name: 'Arun Kumar',
-            phone: '9840123456',
-            email: 'arun@example.com',
-            address: { house: '42', street: 'Lotus Avenue', area: 'R.S. Puram', city: 'Coimbatore', state: 'Tamil Nadu', pincode: '641002' }
-          },
-          items: [{ productId: DEFAULT_PRODUCT.id, productName: DEFAULT_PRODUCT.name, quantity: 2, unitPrice: 149, totalPrice: 298 }],
-          subtotal: 298,
-          deliveryCharge: 0,
-          totalAmount: 298,
-          payment: { method: 'UPI_QR', status: 'SUBMITTED', utr: 'UPI20260829987654' },
-          orderStatus: 'PAYMENT_SUBMITTED' as OrderStatus,
-          googleSheetsSynced: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-    }
+    } catch (e) {}
+
+    // 3. Fallback local storage
+    const localMock: Order[] = JSON.parse(
+      localStorage.getItem('srevia_store_orders') ||
+      localStorage.getItem('mock_orders') ||
+      sessionStorage.getItem('mock_orders') ||
+      '[]'
+    );
+    return localMock.length > 0 ? localMock : [
+      {
+        orderId: 'SRV-20260903-1001',
+        customer: {
+          name: 'Kathirvelan',
+          phone: '9025132739',
+          email: 'kathirvelankvr@gmail.com',
+          address: { house: '108', street: 'Herbal Grove', area: 'Green City', city: 'Coimbatore', state: 'Tamil Nadu', pincode: '641001' }
+        },
+        items: [{ productId: DEFAULT_PRODUCT.id, productName: DEFAULT_PRODUCT.name, quantity: 1, unitPrice: 80, totalPrice: 80 }],
+        subtotal: 80,
+        deliveryCharge: 49,
+        totalAmount: 129,
+        payment: { method: 'UPI_QR', status: 'VERIFIED', utr: 'UPI2026090390251' },
+        orderStatus: 'CONFIRMED',
+        googleSheetsSynced: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
   },
 
   updatePaymentStatus: async (token: string, orderId: string, status: 'VERIFIED' | 'REJECTED', rejectionReason?: string) => {
+    const cleanId = orderId.trim().toUpperCase();
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            payment: { status, rejectionReason },
+            updated_at: new Date().toISOString()
+          })
+          .or(`order_id.eq.${cleanId},orderId.eq.${cleanId}`);
+      } catch (e) {}
+    }
+
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/payment`, {
+      const res = await fetch(`${API_BASE_URL}/admin/orders/${cleanId}/payment`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, rejectionReason })
@@ -284,15 +392,33 @@ export const api = {
   },
 
   updateOrderStatus: async (token: string, orderId: string, orderStatus: string) => {
+    const cleanId = orderId.trim().toUpperCase();
     const payload = { status: orderStatus, orderStatus, changedBy: 'ADMIN' };
     const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            order_status: orderStatus,
+            orderStatus: orderStatus,
+            updated_at: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+          .or(`order_id.eq.${cleanId},orderId.eq.${cleanId}`);
+      } catch (e) {
+        console.warn('Supabase update order status notice:', e);
+      }
+    }
+
     try {
-      await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(orderId)}/status`, {
+      await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(payload)
       });
-      await fetch(`${API_BASE_URL}/admin/orders/${encodeURIComponent(orderId)}/status`, {
+      await fetch(`${API_BASE_URL}/admin/orders/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(payload)

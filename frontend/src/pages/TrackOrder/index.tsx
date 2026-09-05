@@ -63,18 +63,20 @@ export const TrackOrderPage: React.FC = () => {
   useEffect(() => {
     if (!trackedOrder) return;
 
+    const uppercaseId = trackedOrder.orderId.toUpperCase();
+
     // 1. Sync from StoreContext orders array
-    const liveFromStore = orders.find((o) => o.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase());
+    const liveFromStore = orders.find((o) => o.orderId.toUpperCase() === uppercaseId);
     if (liveFromStore && (liveFromStore.orderStatus !== trackedOrder.orderStatus || liveFromStore.trackingNumber !== trackedOrder.trackingNumber)) {
       setTrackedOrder(liveFromStore);
     }
 
-    // 2. Cross-tab BroadcastChannel & CustomEvent listeners
+    // 2. Cross-tab BroadcastChannel, CustomEvent & Storage listeners
     let channel: BroadcastChannel | null = null;
     try {
       channel = new BroadcastChannel('srevia_orders_channel');
       channel.onmessage = (e) => {
-        if (e.data && e.data.orderId && e.data.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase()) {
+        if (e.data && e.data.orderId && e.data.orderId.toUpperCase() === uppercaseId) {
           const newStatus = e.data.orderStatus;
           setTrackedOrder((prev) => prev ? { ...prev, orderStatus: newStatus as any } : null);
         }
@@ -83,16 +85,30 @@ export const TrackOrderPage: React.FC = () => {
 
     const handleCustomOrderChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      if (detail && detail.orderId && detail.orderId.toUpperCase() === trackedOrder.orderId.toUpperCase()) {
+      if (detail && detail.orderId && detail.orderId.toUpperCase() === uppercaseId) {
         setTrackedOrder((prev) => prev ? { ...prev, orderStatus: detail.orderStatus as any } : null);
       }
     };
-    window.addEventListener('srevia_order_change', handleCustomOrderChange);
 
-    // 3. Fast 2.5-second live backend re-fetch to capture API updates immediately
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'srevia_store_orders' || e.key === 'mock_orders') {
+        try {
+          if (e.newValue) {
+            const list: Order[] = JSON.parse(e.newValue);
+            const found = list.find((o) => o.orderId.toUpperCase() === uppercaseId);
+            if (found) setTrackedOrder(found);
+          }
+        } catch (err) {}
+      }
+    };
+
+    window.addEventListener('srevia_order_change', handleCustomOrderChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    // 3. Fast 2.5-second live backend & DB re-fetch to capture API updates immediately
     const interval = setInterval(async () => {
       try {
-        const fresh = await api.trackOrder(trackedOrder.orderId, phoneInput);
+        const fresh = await api.trackOrder(uppercaseId, phoneInput);
         if (fresh && (fresh.orderStatus !== trackedOrder.orderStatus || fresh.trackingNumber !== trackedOrder.trackingNumber)) {
           setTrackedOrder(fresh);
         }
@@ -102,6 +118,7 @@ export const TrackOrderPage: React.FC = () => {
     return () => {
       if (channel) channel.close();
       window.removeEventListener('srevia_order_change', handleCustomOrderChange);
+      window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, [orders, trackedOrder, phoneInput]);

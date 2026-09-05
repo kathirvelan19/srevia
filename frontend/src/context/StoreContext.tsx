@@ -473,26 +473,46 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateOrderStatus = async (orderId: string, stage: OrderStatus | string) => {
+    const uppercaseId = orderId.trim().toUpperCase();
+
     setOrders((prevOrders) => {
       const updated = prevOrders.map((o) =>
-        o.orderId.toLowerCase() === orderId.toLowerCase()
+        o.orderId.toUpperCase() === uppercaseId
           ? { ...o, orderStatus: stage as OrderStatus, updatedAt: new Date().toISOString() }
           : o
       );
       try {
         localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(updated));
+        localStorage.setItem('mock_orders', JSON.stringify(updated));
         sessionStorage.setItem('mock_orders', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
 
     // Instant local & cross-tab broadcast
-    broadcastOrderChange(orderId, stage);
+    broadcastOrderChange(uppercaseId, stage);
+
+    // Sync to Supabase PostgreSQL table
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            order_status: stage,
+            orderStatus: stage,
+            updated_at: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+          .or(`order_id.eq.${uppercaseId},orderId.eq.${uppercaseId}`);
+      } catch (e) {
+        console.warn("Supabase order status update notice:", e);
+      }
+    }
 
     // Sync to Firebase Firestore order status
     try {
-      await setDoc(doc(db, 'orders', orderId.toUpperCase()), {
-        orderId: orderId.toUpperCase(),
+      await setDoc(doc(db, 'orders', uppercaseId), {
+        orderId: uppercaseId,
         orderStatus: stage,
         updatedAt: new Date().toISOString(),
       }, { merge: true });
@@ -502,7 +522,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const token = localStorage.getItem('srevia_admin_token') || 'admin_session';
     try {
-      await api.updateOrderStatus(token, orderId, stage);
+      await api.updateOrderStatus(token, uppercaseId, stage);
     } catch (e) {
       console.warn("Backend status update sync notice:", e);
     }

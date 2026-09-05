@@ -1,5 +1,6 @@
 import { api } from './api';
 import type { Order, OrderStatus } from '../types/order';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? 'https://sreviia-backend.onrender.com/api' : 'http://localhost:8080/api');
 
@@ -14,7 +15,12 @@ export const orderService = {
       if (res.ok) return await res.json();
       return [];
     } catch {
-      return JSON.parse(sessionStorage.getItem('mock_orders') || '[]');
+      return JSON.parse(
+        localStorage.getItem('srevia_store_orders') ||
+        localStorage.getItem('mock_orders') ||
+        sessionStorage.getItem('mock_orders') ||
+        '[]'
+      );
     }
   },
 
@@ -28,8 +34,34 @@ export const orderService = {
     token?: string
   ): Promise<{ success: boolean; order?: Order; message?: string }> => {
     const adminToken = token || localStorage.getItem('srevia_admin_token') || 'admin_token';
+    const cleanId = orderId.trim().toUpperCase();
+
+    if (isSupabaseConfigured()) {
+      try {
+        const updateFields: any = {
+          order_status: payload.status,
+          orderStatus: payload.status,
+          updated_at: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        if (payload.trackingNumber) {
+          updateFields.tracking_number = payload.trackingNumber;
+          updateFields.trackingNumber = payload.trackingNumber;
+        }
+        if (payload.courier) {
+          updateFields.courier = payload.courier;
+        }
+        await supabase
+          .from('orders')
+          .update(updateFields)
+          .or(`order_id.eq.${cleanId},orderId.eq.${cleanId}`);
+      } catch (e) {
+        console.warn('Supabase update order status notice:', e);
+      }
+    }
+
     try {
-      const res = await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(orderId)}/status`, {
+      const res = await fetch(`${API_BASE_URL}/orders/${encodeURIComponent(cleanId)}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
